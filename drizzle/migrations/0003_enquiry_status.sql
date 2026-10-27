@@ -1,0 +1,2 @@
+ALTER TABLE "project_enquiries" ADD COLUMN "status" text DEFAULT 'new' NOT NULL;--> statement-breakpoint
+ALTER TABLE "project_enquiries" ADD CONSTRAINT "project_enquiries_status_check" CHECK ("project_enquiries"."status" IN ('new', 'contacted', 'done'));

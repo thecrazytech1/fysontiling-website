@@ -1,0 +1,9 @@
+[Unit]
+Description=Encrypted database backup for fysontiling.com.au
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=debian
+ExecStart=/home/debian/fysontiling-website/scripts/backup-db.sh
