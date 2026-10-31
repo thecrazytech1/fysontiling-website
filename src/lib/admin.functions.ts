@@ -12,7 +12,7 @@ const projectTypes = [
 
 // A valid Supabase session is not enough: only emails listed in ADMIN_EMAILS get in,
 // so an account created by anyone else can never read enquiries.
-const requireAdmin = createMiddleware({ type: "function" })
+export const requireAdmin = createMiddleware({ type: "function" })
   .middleware([requireSupabaseAuth])
   .server(async ({ next, context }) => {
     const email =

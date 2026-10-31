@@ -142,7 +142,7 @@ export function SiteFooter() {
               {contact.phoneDisplay}
             </a>
             <a
-              href="https://www.instagram.com/fysontiling/"
+              href={contact.instagram}
               target="_blank"
               rel="noreferrer"
               className="mt-3 flex items-center gap-2 text-sm"
@@ -150,12 +150,20 @@ export function SiteFooter() {
               <Instagram size={16} /> Instagram <ArrowUpRight size={14} />
             </a>
             <a
-              href="https://www.facebook.com/fysontiling"
+              href={contact.facebook}
               target="_blank"
               rel="noreferrer"
               className="mt-3 flex items-center gap-2 text-sm"
             >
               Facebook <ArrowUpRight size={14} />
+            </a>
+            <a
+              href={contact.googleProfile}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 flex items-center gap-2 text-sm"
+            >
+              Google <ArrowUpRight size={14} />
             </a>
             <Link to="/areas" className="mt-5 block text-sm">
               Service areas

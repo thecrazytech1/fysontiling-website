@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { gallery, projects } from '@/lib/site-data';
+import { builtInRows } from '@/lib/site-data';
+import { assembleContent } from '@/lib/site-content';
 import pantry from '@/assets/mccrea-pantry.jpg';
 import brickHallway from '@/assets/floor-brick-hallway.jpg';
 import brickLiving from '@/assets/floor-brick-living.jpg';
@@ -9,6 +10,8 @@ import kitchenIsland from '@/assets/fingal-kitchen-island.jpg';
 import kitchenWide from '@/assets/fingal-kitchen-wide.jpg';
 import livingOutdoor from '@/assets/fingal-living-outdoor.jpg';
 import outdoorLiving from '@/assets/fingal-outdoor-living.jpg';
+
+const { gallery, projects } = assembleContent(builtInRows, '');
 
 const floorTiling = new Set([
   brickHallway, brickLiving,
@@ -22,7 +25,7 @@ const expectedType = (image: string) =>
 
 describe('Project inspiration categories', () => {
   it('includes every supplied project photograph in the appropriate category', () => {
-    const photographs = projects.flatMap(project => project.pages.slice(project.magazinePages));
+    const photographs = projects.flatMap(project => project.photos.slice(project.magazinePages).map(photo => photo.url));
     expect(photographs).toHaveLength(37);
     for (const image of photographs) {
       const matches = gallery.filter(item => item.image === image);
@@ -32,7 +35,7 @@ describe('Project inspiration categories', () => {
   });
 
   it('keeps printed magazine pages out of the inspiration gallery', () => {
-    const magazinePages = projects.flatMap(project => project.pages.slice(0, project.magazinePages));
+    const magazinePages = projects.flatMap(project => project.photos.slice(0, project.magazinePages).map(photo => photo.url));
     expect(magazinePages).toHaveLength(5);
     for (const image of magazinePages) {
       expect(gallery.some(item => item.image === image)).toBe(false);
@@ -43,5 +46,12 @@ describe('Project inspiration categories', () => {
     expect(new Set(gallery.map(item => item.image)).size).toBe(gallery.length);
     expect(gallery.filter(item => item.type === 'Outdoors')).toHaveLength(10);
     expect(gallery.filter(item => item.type === 'Outdoors' && item.cover)).toHaveLength(1);
+  });
+
+  it('resolves every built-in photo to a bundled image and keeps project covers', () => {
+    expect(builtInRows.photos.every(photo => photo.src.startsWith('asset:'))).toBe(true);
+    expect(gallery.every(item => item.image.length > 0)).toBe(true);
+    expect(projects.map(project => project.slug)).toEqual(['mccrea-project', 'point-leo-project', 'mt-martha-project', 'pardalote-project', 'fingal-project', 'dava-project']);
+    for (const project of projects) expect(project.photos.map(photo => photo.url)).toContain(project.cover);
   });
 });

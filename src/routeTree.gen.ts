@@ -16,6 +16,7 @@ import { Route as AreasRouteImport } from './routes/areas'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ReviewsRouteImport } from './routes/reviews'
@@ -58,6 +59,11 @@ const GalleryRoute = GalleryRouteImport.update({
   path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MediaRoute = MediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/media': typeof MediaRoute
   '/projects': typeof ProjectsRoute
   '/reviews': typeof ReviewsRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/media': typeof MediaRoute
   '/projects': typeof ProjectsRoute
   '/reviews': typeof ReviewsRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/media': typeof MediaRoute
   '/projects': typeof ProjectsRoute
   '/reviews': typeof ReviewsRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/gallery'
+    | '/llms.txt'
     | '/media'
     | '/projects'
     | '/reviews'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/gallery'
+    | '/llms.txt'
     | '/media'
     | '/projects'
     | '/reviews'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/gallery'
+    | '/llms.txt'
     | '/media'
     | '/projects'
     | '/reviews'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   GalleryRoute: typeof GalleryRoute
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
   MediaRoute: typeof MediaRoute
   ProjectsRoute: typeof ProjectsRoute
   ReviewsRoute: typeof ReviewsRoute
@@ -250,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/media': {
       id: '/media'
       path: '/media'
@@ -303,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   GalleryRoute: GalleryRoute,
+  LlmsDottxtRoute: LlmsDottxtRoute,
   MediaRoute: MediaRoute,
   ProjectsRoute: ProjectsRoute,
   ReviewsRoute: ReviewsRoute,

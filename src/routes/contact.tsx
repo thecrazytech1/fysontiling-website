@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { T } from '@/lib/site-content';
 import { MapPin, ArrowUpRight, Phone } from "lucide-react";
 import { pageHead, contact } from "@/lib/site-data";
 import { Button } from "@/components/ui/button";
@@ -20,15 +21,14 @@ function ContactPage() {
     return (
         <section className="site-width grid gap-12 py-14 md:grid-cols-[1fr_1.2fr] md:gap-20 md:py-20">
             <div>
-                <p className="eyebrow mb-4 text-primary">Your next chapter</p>
+                <p className="eyebrow mb-4 text-primary">
+                    <T k="contact.eyebrow" />
+                </p>
                 <h1 className="page-title">
-                    LET’S MAKE
-                    <br />
-                    IT HAPPEN.
+                    <T k="contact.title" />
                 </h1>
                 <p className="mt-6 max-w-sm text-sm leading-8 text-muted-foreground">
-                    A new bathroom? A splashback with character? Tell Shaun what you have in mind. A great
-                    space starts with a conversation.
+                    <T k="contact.intro" />
                 </p>
                 <Button asChild className="mt-8 h-14 w-full rounded-full px-7 text-base sm:w-auto">
                     <a href={contact.phoneTel}>
@@ -37,19 +37,27 @@ function ContactPage() {
                     </a>
                 </Button>
                 <p className="mt-3 text-xs leading-6 text-muted-foreground">
-                    Tap to call Shaun directly. Prefer to write it down? Use the form and you’ll hear back.
+                    <T k="contact.callNote" />
                 </p>
                 <p className="mt-8 flex items-center gap-2 text-sm">
                     <MapPin size={17} className="text-primary" />
                     Mornington Peninsula, Victoria
                 </p>
                 <a
-                    href="https://www.instagram.com/fysontiling/"
+                    href={contact.instagram}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-5 flex items-center gap-2 text-sm text-primary"
                 >
                     @fysontiling <ArrowUpRight size={16} />
+                </a>
+                <a
+                    href={contact.googleProfile}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 flex items-center gap-2 text-sm text-primary"
+                >
+                    Find us on Google <ArrowUpRight size={16} />
                 </a>
             </div>
             <EnquiryForm key={suburb ?? ""} initialSuburb={suburb ?? ""} />

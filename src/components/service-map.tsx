@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ClientOnly, Link } from '@tanstack/react-router';
 import { ArrowUpRight, MapPin, Search } from 'lucide-react';
 import { suburbs } from '@/lib/site-data';
+import { T } from '@/lib/site-content';
 import { Button } from '@/components/ui/button';
 
 type LeafletMap = import('leaflet').Map;
@@ -83,11 +84,9 @@ export function ServiceMapSection() {
   return (
     <section className="border-b border-border py-16 md:py-24">
       <div className="site-width">
-        <p className="eyebrow mb-3 text-primary">Where we work</p>
-        <h2 className="section-title mb-4">MORNINGTON PENINSULA<br/>AND SURROUNDS.</h2>
-        <p className="mb-8 max-w-xl text-sm leading-7 text-muted-foreground">
-          Local tiling across the Mornington Peninsula and surrounds — from Mornington and Mount Martha to Sorrento and Portsea, and everywhere in between. Enquire with your suburb to confirm availability for your project.
-        </p>
+        <p className="eyebrow mb-3 text-primary"><T k="map.eyebrow" /></p>
+        <h2 className="section-title mb-4"><T k="map.title" /></h2>
+        <p className="mb-8 max-w-xl text-sm leading-7 text-muted-foreground"><T k="map.intro" /></p>
         <div className="grid gap-8 md:grid-cols-[1fr_1.4fr]">
           <div>
             <label className="relative block">

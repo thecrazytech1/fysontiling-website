@@ -16,6 +16,7 @@ import {
   setEnquiryStatus,
   setTestimonialApproved,
 } from "@/lib/admin.functions";
+import { FaqsAdmin, GalleryAdmin, ProjectsAdmin, TextAdmin } from "@/components/admin-content";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +66,7 @@ function AdminPage() {
   return (
     <section className="site-width py-14 md:py-20">
       <p className="eyebrow mb-3 text-primary">Admin</p>
-      <h1 className="font-display text-5xl md:text-6xl">ENQUIRIES & REVIEWS.</h1>
+      <h1 className="font-display text-5xl md:text-6xl">WEBSITE ADMIN.</h1>
       <div className="mt-10">
         {session === undefined ? (
           <LoaderCircle className="animate-spin text-muted-foreground" />
@@ -152,9 +153,13 @@ function AdminArea({ email }: { email: string }) {
   return (
     <Tabs defaultValue="enquiries">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <TabsList>
+        <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="enquiries">Enquiries</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="gallery">Gallery</TabsTrigger>
+          <TabsTrigger value="text">Page text</TabsTrigger>
+          <TabsTrigger value="faqs">FAQs</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {email} {signOut}
@@ -165,6 +170,18 @@ function AdminArea({ email }: { email: string }) {
       </TabsContent>
       <TabsContent value="reviews" className="mt-8">
         <Reviews />
+      </TabsContent>
+      <TabsContent value="projects" className="mt-8">
+        <ProjectsAdmin />
+      </TabsContent>
+      <TabsContent value="gallery" className="mt-8">
+        <GalleryAdmin />
+      </TabsContent>
+      <TabsContent value="text" className="mt-8">
+        <TextAdmin />
+      </TabsContent>
+      <TabsContent value="faqs" className="mt-8">
+        <FaqsAdmin />
       </TabsContent>
     </Tabs>
   );

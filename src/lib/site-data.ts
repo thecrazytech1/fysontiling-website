@@ -64,12 +64,18 @@ import fingalOutdoorLivingAsset from '@/assets/fingal-outdoor-living.jpg';
 import fingalSaunaOutdoorAsset from '@/assets/fingal-sauna-outdoor.jpg';
 import fingalMasterEnsuiteAsset from '@/assets/fingal-master-ensuite.jpg';
 import fingalEnsuiteGreenTilesAsset from '@/assets/fingal-ensuite-green-tiles.jpg';
+import logoAsset from '@/assets/fyson-logo.png';
+import type { ContentRows, PhotoRow, Project, ProjectRow } from '@/lib/site-content';
 
 export const hero = heroAsset;
 export const aboutPhoto = aboutPortraitAsset;
 export const contact = {
   phoneDisplay: '0401 428 430',
   phoneTel: 'tel:+61401428430',
+  instagram: 'https://www.instagram.com/fysontiling/',
+  facebook: 'https://www.facebook.com/fysontiling',
+  googleProfile: 'https://share.google/ZVZgl5Mg4IQAs1SEL',
+  googleReview: 'https://g.page/r/CbXkkwPjS2eSEAI/review',
 } as const;
 const kitchen = kitchenAsset;
 const brick = brickAsset;
@@ -207,7 +213,7 @@ const existingGallery: GalleryItem[] = [
   { image: dualVanity, title: 'Glossy black wall tiles above a band of large-format charcoal splashback tiles.', type: 'Bathroom Tiling' },
   ...[outdoors1, outdoors2, outdoors3, outdoors4, outdoors5, outdoors6, outdoors7Tiled, outdoors8, outdoors9].map((asset, index) => ({ image: asset, title: outdoorsTitles[index] ?? `Outdoors — ${index + 1}`, type: 'Outdoors', cover: index === 5 })),
 ];
-export const faqs = [
+export const faqs: Array<[question: string, answer: string]> = [
   ['How do I get a quote?', 'Send an enquiry with your suburb, the type of tiling and a short description of your project. Include approximate dimensions if you have them. Shaun can discuss the details and the next steps with you.'],
   ['Can I enquire before choosing my tiles?', 'Yes. You can start a conversation while you are still exploring ideas. Mention the look you have in mind and whether you have already selected any tiles.'],
   ['Do you cover my suburb?', 'Fyson Tiling is based on the Mornington Peninsula. Include your suburb in your enquiry so availability for your location can be confirmed.'],
@@ -263,7 +269,7 @@ export const press: Array<{ publication: string; title: string; blurb: string; u
   { publication: 'Australian House & Garden', title: 'Mt.Martha Project', blurb: 'An Australian House & Garden issue featuring a Fyson Tiling project.', image: houseGardenCoverAsset, featureImage: houseGardenMtMarthaFeatureAsset },
 ];
 // Only associate photos with named projects when Shaun has supplied that association.
-export type Project = { slug: string; title: string; publication: string; image?: string | undefined; featureImage?: string | undefined; cover?: string | undefined; coverFocus?: string | undefined; pages: string[]; magazinePages: number };
+type StaticProject = { slug: string; title: string; publication: string; image?: string | undefined; featureImage?: string | undefined; cover?: string | undefined; coverFocus?: string | undefined; pages: string[]; magazinePages: number };
 // Extra photos Shaun supplied for a project's own page. These are not magazine pages,
 // so they stay out of the press entry and only extend the project story.
 const projectPhotos: Record<string, string[]> = {
@@ -282,8 +288,8 @@ const projectCovers: Record<string, string> = {
 const projectCoverFocus: Record<string, string> = {
   'mt-martha-project': 'center bottom',
 };
-export const projects: Project[] = [
-  ...press.map((feature, index): Project => {
+const staticProjects: StaticProject[] = [
+  ...press.map((feature, index): StaticProject => {
     const slug = ['mccrea-project', 'point-leo-project', 'mt-martha-project'][index] ?? '';
     const featurePages = feature.featurePages ?? (feature.featureImage ? [feature.featureImage] : []);
     return {
@@ -320,7 +326,7 @@ const projectPhotoCategories: Record<string, string> = {
   ...Object.fromEntries([fingalKitchenDining, fingalKitchenIsland, fingalKitchenWide, fingalLivingOutdoor, fingalOutdoorLiving].map(image => [image, 'Floor Tiling'])),
 };
 const galleryImages = new Set(existingGallery.map(item => item.image));
-const additionalProjectImages = projects.flatMap(project => project.pages.slice(project.magazinePages))
+const additionalProjectImages = staticProjects.flatMap(project => project.pages.slice(project.magazinePages))
   .flatMap((image): GalleryItem[] => {
     const type = projectPhotoCategories[image];
     const title = photoDescriptions[image];
@@ -328,8 +334,71 @@ const additionalProjectImages = projects.flatMap(project => project.pages.slice(
     galleryImages.add(image);
     return [{ image, title, type }];
   });
-export const gallery: GalleryItem[] = [...existingGallery, ...additionalProjectImages];
+const staticGallery: GalleryItem[] = [...existingGallery, ...additionalProjectImages];
+
+// Bundled photos are stored in the database as "asset:<file name>", which stays stable
+// across builds while the hashed URL changes.
+const bundledAssets = import.meta.glob<string>('../assets/*.{jpg,jpeg,png,webp}', { eager: true, import: 'default' });
+const assetFiles = new Map(Object.entries(bundledAssets).map(([path, url]) => [url, path.split('/').pop() ?? path]));
+const assetUrls = new Map([...assetFiles].map(([url, file]) => [file, url]));
+export const bundledAssetUrl = (file: string) => assetUrls.get(file);
+const assetSrc = (url: string) => `asset:${assetFiles.get(url) ?? url}`;
+
+// The content the site shipped with, shaped like the database tables. It seeds the tables
+// (see scripts/seed-site-content.test.ts) and is shown whenever the database can't be read.
+export const builtInRows: ContentRows = (() => {
+  const projects: ProjectRow[] = [];
+  const photos: PhotoRow[] = [];
+  const galleryIndex = new Map(staticGallery.map((item, index) => [item.image, { item, index }]));
+  const photoRow = (id: string, image: string, projectId: string | null, sortOrder: number, magazinePage: boolean): PhotoRow => {
+    const inGallery = magazinePage ? undefined : galleryIndex.get(image);
+    return {
+      id,
+      project_id: projectId,
+      src: assetSrc(image),
+      caption: inGallery?.item.title ?? photoDescriptions[image] ?? '',
+      category: inGallery?.item.type ?? null,
+      magazine_page: magazinePage,
+      category_cover: inGallery?.item.cover ?? false,
+      focus: inGallery?.item.focus ?? 'center',
+      sort_order: sortOrder,
+      gallery_order: inGallery?.index ?? 0,
+    };
+  };
+  const projectImages = new Set<string>();
+  staticProjects.forEach((project, projectIndex) => {
+    const id = `built-in-project-${projectIndex + 1}`;
+    const rows = project.pages.map((image, index) => photoRow(`${id}-photo-${index + 1}`, image, id, index, index < project.magazinePages));
+    project.pages.slice(project.magazinePages).forEach(image => projectImages.add(image));
+    photos.push(...rows);
+    const coverIndex = project.cover ? project.pages.indexOf(project.cover) : -1;
+    projects.push({
+      id,
+      slug: project.slug,
+      title: project.title,
+      publication: project.publication,
+      intro: '',
+      cover_photo_id: rows[coverIndex]?.id ?? null,
+      cover_focus: project.coverFocus ?? 'center',
+      sort_order: projectIndex,
+      published: true,
+    });
+  });
+  staticGallery.forEach((item, index) => {
+    if (!projectImages.has(item.image)) photos.push(photoRow(`built-in-gallery-${index + 1}`, item.image, null, 0, false));
+  });
+  return {
+    projects,
+    photos,
+    faqs: faqs.map(([question, answer], index) => ({ id: `built-in-faq-${index + 1}`, question, answer, sort_order: index })),
+    text: [],
+  };
+})();
 export const siteOrigin = 'https://www.fysontiling.com.au';
+
+const businessId = `${siteOrigin}/#business`;
+// Bundled assets resolve to site-relative paths; crawlers and link previews need absolute URLs.
+export const absoluteUrl = (path: string) => new URL(path, siteOrigin).href;
 
 // Structured data for search engines and AI assistants. Only confirmed facts are
 // stated: no street address, email address or opening hours have been supplied.
@@ -337,22 +406,89 @@ export function localBusinessJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'HomeAndConstructionBusiness',
+    '@id': businessId,
     name: 'Fyson Tiling',
     description:
-      'Residential wall and floor tiling on the Mornington Peninsula, Victoria — bathrooms, kitchens, splashbacks, walls and floors.',
+      'Residential wall and floor tiling on the Mornington Peninsula, Victoria — bathrooms, kitchens, splashbacks, walls, floors and outdoor areas. Owner-operated by Shaun Fyson, with 20 years of tiling experience.',
     url: siteOrigin,
+    logo: absoluteUrl(logoAsset),
+    image: [absoluteUrl(hero), absoluteUrl(aboutPhoto)],
     telephone: '+61 401 428 430',
-    founder: { '@type': 'Person', name: 'Shaun Fyson' },
+    founder: { '@type': 'Person', name: 'Shaun Fyson', jobTitle: 'Tiler' },
+    knowsAbout: ['Bathroom tiling', 'Ensuite tiling', 'Kitchen splashbacks', 'Wall tiling', 'Floor tiling', 'Outdoor tiling', 'Grout colour selection', 'Tile layout planning'],
     areaServed: [
       { '@type': 'AdministrativeArea', name: 'Mornington Peninsula, Victoria, Australia' },
       ...suburbs.map((s) => ({ '@type': 'City', name: `${s.name}, VIC` })),
     ],
-    sameAs: ['https://www.facebook.com/fysontiling', 'https://www.instagram.com/fysontiling/'],
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Tiling services',
+      itemListElement: services.map((service) => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name: service.title, description: service.text } })),
+    },
+    hasMap: contact.googleProfile,
+    sameAs: [contact.googleProfile, contact.facebook, contact.instagram],
   };
 }
 
-export function pageHead(title: string, description: string, path: string, type: 'website' | 'article' = 'website') {
+export function servicesJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': services.map((service) => ({
+      '@type': 'Service',
+      name: service.title,
+      serviceType: service.title,
+      description: service.text,
+      image: absoluteUrl(service.image),
+      provider: { '@id': businessId },
+      areaServed: { '@type': 'AdministrativeArea', name: 'Mornington Peninsula, Victoria, Australia' },
+    })),
+  };
+}
+
+export function faqJsonLd(faqList: Array<[question: string, answer: string]>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqList.map(([question, answer]) => ({ '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: answer } })),
+  };
+}
+
+export function breadcrumbJsonLd(trail: Array<[name: string, path: string]>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map(([name, path], index) => ({ '@type': 'ListItem', position: index + 1, name, item: `${siteOrigin}${path}` })),
+  };
+}
+
+// A project's own photographs (magazine pages excluded), each with its tiling caption.
+const projectPhotographs = (project: Project) => project.photos.slice(project.magazinePages);
+
+export function projectDescription(project: Project) {
+  const lead = project.intro || projectPhotographs(project)[0]?.caption || '';
+  const featured = project.publication ? `, featured in ${project.publication}` : '';
+  return `${project.title} by Fyson Tiling, Mornington Peninsula${featured}. ${lead}`.trim();
+}
+
+export function projectJsonLd(project: Project) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWork',
+    name: project.title,
+    description: projectDescription(project),
+    url: `${siteOrigin}/projects/${project.slug}`,
+    creator: { '@id': businessId },
+    image: projectPhotographs(project).map((photo) => ({
+      '@type': 'ImageObject',
+      contentUrl: absoluteUrl(photo.url),
+      ...(photo.caption ? { caption: photo.caption } : {}),
+    })),
+  };
+}
+
+export function pageHead(title: string, description: string, path: string, type: 'website' | 'article' = 'website', image: string = hero) {
   const url = `${siteOrigin}${path}`;
+  const imageUrl = absoluteUrl(image);
   return {
     meta: [
       { title: `${title} — Fyson Tiling` },
@@ -361,7 +497,9 @@ export function pageHead(title: string, description: string, path: string, type:
       { property: 'og:title', content: `${title} — Fyson Tiling` },
       { property: 'og:description', content: description },
       { property: 'og:url', content: url },
+      { property: 'og:image', content: imageUrl },
       { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:image', content: imageUrl },
     ],
     links: [{ rel: 'canonical', href: url }],
   };

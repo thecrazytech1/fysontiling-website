@@ -1,16 +1,29 @@
 Sitemap: https://www.fysontiling.com.au/sitemap.xml
 
+# Search engines and link previews
 User-agent: Googlebot
-Allow: /
-
 User-agent: Bingbot
-Allow: /
-
+User-agent: Applebot
+User-agent: DuckDuckBot
 User-agent: Twitterbot
-Allow: /
-
 User-agent: facebookexternalhit
 Allow: /
+Disallow: /admin
+
+# AI search and assistants — welcome, so Fyson Tiling can be cited in answers
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin
 
 User-agent: *
 Allow: /
+Disallow: /admin

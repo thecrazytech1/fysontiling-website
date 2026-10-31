@@ -7,7 +7,6 @@ import {
   sitemapXML,
   type SitemapEntry,
 } from "@/lib/sitemap";
-import { projects } from "@/lib/site-data";
 
 // Public site origin — used for every <loc> in /sitemap.xml.
 const BASE_URL = "https://www.fysontiling.com.au";
@@ -28,9 +27,11 @@ export const Route = createFileRoute("/sitemap.xml")({
         const router = await getRouterInstance();
         const entries: SitemapEntry[] = sitemapStaticPaths(router).map((path) => ({ path }));
 
-        // Project pages come from the site's own project list — no database query needed.
+        // Project pages come from the published projects Shaun manages in /admin.
         const projectRoute = router.routesById[PROJECT_ROUTE_ID];
         if (isSitemapRouteIncluded(projectRoute)) {
+          const { loadSiteContent } = await import("@/lib/content.server");
+          const { projects } = await loadSiteContent();
           for (const project of projects) {
             const location = router.buildLocation({
               to: "/projects/$slug",

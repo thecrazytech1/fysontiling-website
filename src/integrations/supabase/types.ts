@@ -50,6 +50,145 @@ export type Database = {
         }
         Relationships: []
       }
+      site_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          question: string
+          sort_order: number
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          question: string
+          sort_order?: number
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      site_photos: {
+        Row: {
+          caption: string
+          category: string | null
+          category_cover: boolean
+          created_at: string
+          focus: string
+          gallery_order: number
+          id: string
+          magazine_page: boolean
+          project_id: string | null
+          sort_order: number
+          src: string
+        }
+        Insert: {
+          caption?: string
+          category?: string | null
+          category_cover?: boolean
+          created_at?: string
+          focus?: string
+          gallery_order?: number
+          id?: string
+          magazine_page?: boolean
+          project_id?: string | null
+          sort_order?: number
+          src: string
+        }
+        Update: {
+          caption?: string
+          category?: string | null
+          category_cover?: boolean
+          created_at?: string
+          focus?: string
+          gallery_order?: number
+          id?: string
+          magazine_page?: boolean
+          project_id?: string | null
+          sort_order?: number
+          src?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_photos_project_id_site_projects_id_fk"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "site_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_projects: {
+        Row: {
+          cover_focus: string
+          cover_photo_id: string | null
+          created_at: string
+          id: string
+          intro: string
+          publication: string
+          published: boolean
+          slug: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          cover_focus?: string
+          cover_photo_id?: string | null
+          created_at?: string
+          id?: string
+          intro?: string
+          publication?: string
+          published?: boolean
+          slug: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          cover_focus?: string
+          cover_photo_id?: string | null
+          created_at?: string
+          id?: string
+          intro?: string
+          publication?: string
+          published?: boolean
+          slug?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_projects_cover_photo_id_site_photos_id_fk"
+            columns: ["cover_photo_id"]
+            isOneToOne: false
+            referencedRelation: "site_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_text: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       testimonials: {
         Row: {
           approved: boolean

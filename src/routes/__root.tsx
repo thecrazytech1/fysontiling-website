@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader, SiteFooter } from '@/components/site-shell';
 import { localBusinessJsonLd, siteOrigin } from '@/lib/site-data';
+import { getSiteContent } from '@/lib/content.functions';
 import { Button } from '@/components/ui/button';
 
 function NotFoundComponent() {
@@ -78,6 +79,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   staticData: { sitemap: false },
+  // Projects, photos, FAQs and page text Shaun edits in /admin; pages read them via useSiteContent().
+  loader: () => getSiteContent(),
+  staleTime: 60_000,
   head: () => ({
     meta: [
       { charSet: "utf-8" },

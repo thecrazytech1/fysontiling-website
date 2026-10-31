@@ -143,3 +143,23 @@
 - [x] Enquiries gain a status (new / contacted / done)
 - [x] Private /admin page (Supabase login, limited to ADMIN_EMAILS): enquiries with status and delete; reviews with approve/hide, add (published straight away) and delete
 - [ ] Fill in SMTP settings and Shaun's address in .env, run migrations, create the two admin accounts
+
+## Google Business Profile (Oct 31)
+- [x] Linked Shaun's Google Business Profile in structured data (sameAs + hasMap), footer, contact page and llms.txt
+- [x] Added "Review us on Google" links on the Reviews page and the homepage "Get to know" band
+
+## SEO & GEO (Oct 31)
+- [x] Every page now has a share/preview image (og:image, twitter:image) using absolute URLs
+- [x] Business structured data gains logo, photos, services catalogue, skills and a stable @id; FAQ page, Services, project (with captioned photos) and breadcrumb structured data added
+- [x] Sharper page descriptions for Services, FAQ, Projects and each project page (built from Shaun's own photo captions)
+- [x] robots.txt explicitly welcomes AI search crawlers and keeps /admin out; llms.txt expanded with services, suburbs, press, projects and FAQs
+- [ ] Offered: an "Outdoor tiling" service card, and individual suburb pages — awaiting owner decision
+
+## Website editor in /admin (Oct 31)
+- [x] Projects tab: add/edit/hide/delete/reorder projects, upload photos (resized in the browser), captions, cover photo, magazine pages, gallery category
+- [x] Gallery tab: standalone inspiration photos, reorder, category covers, crop
+- [x] Page text tab: every heading and paragraph on Home, About, Services, Areas, Gallery, Projects, Media, Reviews, FAQ and Contact, with "Back to original"
+- [x] FAQs tab: add, edit, reorder, delete (also feeds the FAQ structured data)
+- [x] Sitemap and llms.txt now follow the live projects; site falls back to built-in content if the database is unreachable
+- [ ] Apply migration 0004 on the server, then test the editor end to end
+- [ ] Not editable yet: Media page press cards, services list/titles, suburbs, contact details
