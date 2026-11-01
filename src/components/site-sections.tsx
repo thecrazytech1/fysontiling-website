@@ -70,9 +70,10 @@ export function GallerySection({
   initialType?: string | undefined;
   limit?: number | undefined;
 }) {
-  const { gallery } = useSiteContent();
+  const { gallery, categories } = useSiteContent();
   const [selected, setSelected] = useState<number | null>(null);
-  const types = ["All", ...Array.from(new Set(gallery.map((g) => g.type)))];
+  // Categories come in the order Shaun sets in /admin; empty ones are already left out.
+  const types = ["All", ...categories];
   const [filter, setFilter] = useState(
     initialType && types.includes(initialType) ? initialType : "All",
   );

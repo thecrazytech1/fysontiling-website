@@ -54,4 +54,11 @@ describe('Project inspiration categories', () => {
     expect(projects.map(project => project.slug)).toEqual(['mccrea-project', 'point-leo-project', 'mt-martha-project', 'pardalote-project', 'fingal-project', 'dava-project']);
     for (const project of projects) expect(project.photos.map(photo => photo.url)).toContain(project.cover);
   });
+
+  it('orders gallery categories as stored and leaves out empty ones', () => {
+    expect(assembleContent(builtInRows, '').categories).toEqual(['Bathroom Tiling', 'Splashback', 'Floor Tiling', 'Outdoors']);
+    const reordered = builtInRows.categories.map(c => ({ ...c, sort_order: c.name === 'Outdoors' ? -1 : c.sort_order }));
+    const withEmpty = [...reordered, { id: 'empty', name: 'Laundries', sort_order: 9 }];
+    expect(assembleContent({ ...builtInRows, categories: withEmpty }, '').categories).toEqual(['Outdoors', 'Bathroom Tiling', 'Splashback', 'Floor Tiling']);
+  });
 });

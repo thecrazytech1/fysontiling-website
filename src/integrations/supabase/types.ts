@@ -74,6 +74,27 @@ export type Database = {
         }
         Relationships: []
       }
+      site_gallery_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       site_photos: {
         Row: {
           caption: string
@@ -115,6 +136,13 @@ export type Database = {
           src?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "site_photos_category_site_gallery_categories_name_fk"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "site_gallery_categories"
+            referencedColumns: ["name"]
+          },
           {
             foreignKeyName: "site_photos_project_id_site_projects_id_fk"
             columns: ["project_id"]

@@ -392,6 +392,7 @@ export const builtInRows: ContentRows = (() => {
     photos,
     faqs: faqs.map(([question, answer], index) => ({ id: `built-in-faq-${index + 1}`, question, answer, sort_order: index })),
     text: [],
+    categories: ['Bathroom Tiling', 'Splashback', 'Floor Tiling', 'Outdoors'].map((name, index) => ({ id: `built-in-category-${index + 1}`, name, sort_order: index })),
   };
 })();
 export const siteOrigin = 'https://www.fysontiling.com.au';

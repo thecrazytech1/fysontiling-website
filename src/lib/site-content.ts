@@ -16,6 +16,7 @@ export type ProjectRow = {
   sort_order: number;
   published: boolean;
 };
+
 export type PhotoRow = {
   id: string;
   project_id: string | null;
@@ -28,17 +29,24 @@ export type PhotoRow = {
   sort_order: number;
   gallery_order: number;
 };
+
 export type FaqRow = { id: string; question: string; answer: string; sort_order: number };
+
 export type TextRow = { key: string; value: string };
+
+export type CategoryRow = { id: string; name: string; sort_order: number };
+
 export type ContentRows = {
   projects: ProjectRow[];
   photos: PhotoRow[];
   faqs: FaqRow[];
   text: TextRow[];
+  categories: CategoryRow[];
 };
 
 // Shapes the pages render.
 export type ProjectPhoto = { url: string; caption: string };
+
 export type Project = {
   slug: string;
   title: string;
@@ -50,6 +58,7 @@ export type Project = {
   photos: ProjectPhoto[];
   magazinePages: number;
 };
+
 export type GalleryItem = {
   image: string;
   title: string;
@@ -57,19 +66,16 @@ export type GalleryItem = {
   focus: string;
   cover: boolean;
 };
+
 export type SiteContent = {
   projects: Project[];
   gallery: GalleryItem[];
+  // Gallery categories that have photos, in Shaun's order.
+  categories: string[];
   faqs: Array<[question: string, answer: string]>;
   text: Partial<Record<TextKey, string>>;
 };
 
-export const galleryCategories = [
-  "Bathroom Tiling",
-  "Splashback",
-  "Floor Tiling",
-  "Outdoors",
-] as const;
 export const photoBucket = "site-photos";
 
 // "asset:<file>" is a photo bundled with the site; "storage:<path>" was uploaded from /admin.
@@ -125,9 +131,14 @@ export function assembleContent(rows: ContentRows, storageBase: string): SiteCon
     }));
   const text: SiteContent["text"] = {};
   for (const row of rows.text) if (row.key in textDefaults) text[row.key as TextKey] = row.value;
+  const categories = [...rows.categories]
+    .sort(byOrder)
+    .map((category) => category.name)
+    .filter((name) => gallery.some((item) => item.type === name));
   return {
     projects,
     gallery,
+    categories,
     faqs: [...rows.faqs].sort(byOrder).map((faq) => [faq.question, faq.answer]),
     text,
   };

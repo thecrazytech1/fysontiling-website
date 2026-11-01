@@ -27,7 +27,7 @@ function publicClient() {
 
 async function readRows(): Promise<ContentRows> {
   const db = publicClient();
-  const [projects, photos, faqs, text] = await Promise.all([
+  const [projects, photos, faqs, text, categories] = await Promise.all([
     db
       .from("site_projects")
       .select(
@@ -40,14 +40,16 @@ async function readRows(): Promise<ContentRows> {
       ),
     db.from("site_faqs").select("id, question, answer, sort_order"),
     db.from("site_text").select("key, value"),
+    db.from("site_gallery_categories").select("id, name, sort_order"),
   ]);
-  const error = projects.error ?? photos.error ?? faqs.error ?? text.error;
+  const error = projects.error ?? photos.error ?? faqs.error ?? text.error ?? categories.error;
   if (error) throw new Error(error.message);
   return {
     projects: projects.data ?? [],
     photos: photos.data ?? [],
     faqs: faqs.data ?? [],
     text: text.data ?? [],
+    categories: categories.data ?? [],
   };
 }
 

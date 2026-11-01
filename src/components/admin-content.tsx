@@ -14,11 +14,13 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  deleteCategory,
   deleteFaq,
   deletePhoto,
   deleteProject,
   getAdminContent,
   resetText,
+  saveCategory,
   saveFaq,
   saveOrder,
   saveProject,
@@ -27,7 +29,6 @@ import {
   updatePhoto,
   uploadPhoto,
 } from "@/lib/content.functions";
-import { galleryCategories } from "@/lib/site-content";
 import { textDefaults, type TextKey } from "@/lib/site-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,6 @@ import {
 type AdminContent = Awaited<ReturnType<typeof getAdminContent>>;
 type AdminProject = AdminContent["projects"][number];
 type AdminPhoto = AdminContent["photos"][number];
-type Category = (typeof galleryCategories)[number];
 type Focus = "center" | "center top" | "center bottom";
 
 const errorText = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
@@ -81,6 +81,11 @@ function moved(ids: string[], index: number, direction: -1 | 1) {
 
 function useAdminContent() {
   return useQuery({ queryKey: contentKey, queryFn: () => getAdminContent() });
+}
+
+// Gallery category names in Shaun's order (shared with the lists above via the query cache).
+function useCategoryNames() {
+  return useAdminContent().data?.categories.map((c) => c.name) ?? [];
 }
 
 // Every edit refreshes the admin lists and the site content this browser has cached.
@@ -179,6 +184,7 @@ function PhotoUploader({
   requireCategory?: boolean;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const categories = useCategoryNames();
   const [category, setCategory] = useState<string>(requireCategory ? "" : notInGallery);
   const [progress, setProgress] = useState("");
   const upload = useEdit(async (files: File[]) => {
@@ -209,7 +215,7 @@ function PhotoUploader({
             </SelectTrigger>
             <SelectContent>
               {!requireCategory && <SelectItem value={notInGallery}>Not in the gallery</SelectItem>}
-              {galleryCategories.map((c) => (
+              {categories.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
                 </SelectItem>
@@ -268,6 +274,7 @@ function PhotoCard({
   projectTitle?: string | undefined;
 }) {
   const [caption, setCaption] = useState(photo.caption);
+  const categories = useCategoryNames();
   const [category, setCategory] = useState(photo.category ?? notInGallery);
   const [magazinePage, setMagazinePage] = useState(photo.magazine_page);
   const [focus, setFocus] = useState<Focus>(asFocus(photo.focus));
@@ -283,7 +290,7 @@ function PhotoCard({
     return {
       id: photo.id,
       caption,
-      category: chosen === notInGallery ? null : (chosen as Category),
+      category: chosen === notInGallery ? null : chosen,
       magazinePage,
       // A cover moved to another category stops being a cover.
       categoryCover: overrides.categoryCover ?? (photo.category_cover && chosen === photo.category),
@@ -354,7 +361,7 @@ function PhotoCard({
                 {mode === "project" && (
                   <SelectItem value={notInGallery}>Not in the gallery</SelectItem>
                 )}
-                {galleryCategories.map((c) => (
+                {categories.map((c) => (
                   <SelectItem key={c} value={c}>
                     Gallery: {c}
                   </SelectItem>
@@ -707,7 +714,7 @@ function ProjectEditor({
 
 export function GalleryAdmin() {
   const content = useAdminContent();
-  const [filter, setFilter] = useState<Category | "All">("All");
+  const [filter, setFilter] = useState("All");
   const reorder = useEdit(saveOrder);
   if (content.isPending) return <Loading />;
   if (content.isError) return <ErrorLine error={content.error} />;
@@ -736,9 +743,10 @@ export function GalleryAdmin() {
         The inspiration gallery shows these photos in this order. Project photos appear here when
         they have a gallery category. Each category's cover photo is the one shown on the home page.
       </p>
+      <CategoriesAdmin categories={content.data.categories} photos={photos} />
       <PhotoUploader projectId={null} requireCategory />
       <div className="flex flex-wrap gap-2">
-        {(["All", ...galleryCategories] as const).map((c) => (
+        {["All", ...content.data.categories.map((c) => c.name)].map((c) => (
           <Button
             key={c}
             size="sm"
@@ -762,6 +770,127 @@ export function GalleryAdmin() {
           projectTitle={photo.project_id ? titles.get(photo.project_id) : undefined}
         />
       ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- gallery categories
+
+function CategoriesAdmin({
+  categories,
+  photos,
+}: {
+  categories: AdminContent["categories"];
+  photos: AdminPhoto[];
+}) {
+  const reorder = useEdit(saveOrder);
+  const add = useEdit(saveCategory);
+  const [name, setName] = useState("");
+  const ids = categories.map((c) => c.id);
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    add.mutate({ data: { name } }, { onSuccess: () => setName("") });
+  }
+  return (
+    <section className="grid gap-3 rounded-2xl border border-border bg-card/40 p-5">
+      <div>
+        <h2 className="font-display text-2xl">CATEGORIES.</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          The gallery's filter buttons, in this order. The first three appear on the home page. A
+          category only shows on the site once it has photos.
+        </p>
+      </div>
+      <ErrorLine error={reorder.error} />
+      {categories.map((category, index) => (
+        <CategoryRow
+          key={`${category.id}-${category.name}`}
+          category={category}
+          photoCount={photos.filter((p) => p.category === category.name).length}
+          index={index}
+          count={categories.length}
+          moving={reorder.isPending}
+          onMove={(d) =>
+            reorder.mutate({ data: { list: "categories", ids: moved(ids, index, d) } })
+          }
+        />
+      ))}
+      <form onSubmit={submit} className="flex flex-wrap gap-2">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={60}
+          placeholder="New category, e.g. Laundries"
+          aria-label="New category name"
+          className="h-10 max-w-xs bg-background"
+        />
+        <Button type="submit" size="sm" className="h-10" disabled={!name.trim() || add.isPending}>
+          {add.isPending ? <LoaderCircle className="animate-spin" /> : <Plus />} Add category
+        </Button>
+      </form>
+      <ErrorLine error={add.error} />
+    </section>
+  );
+}
+
+function CategoryRow({
+  category,
+  photoCount,
+  index,
+  count,
+  moving,
+  onMove,
+}: {
+  category: AdminContent["categories"][number];
+  photoCount: number;
+  index: number;
+  count: number;
+  moving: boolean;
+  onMove: (direction: -1 | 1) => void;
+}) {
+  const [name, setName] = useState(category.name);
+  const rename = useEdit(saveCategory);
+  const remove = useEdit(deleteCategory);
+  return (
+    <div className="grid gap-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={60}
+          aria-label={`Rename ${category.name}`}
+          className="h-10 max-w-xs bg-background"
+        />
+        {name.trim() !== category.name && (
+          <Button
+            size="sm"
+            className="h-10"
+            disabled={!name.trim() || rename.isPending}
+            onClick={() => rename.mutate({ data: { id: category.id, name } })}
+          >
+            {rename.isPending ? <LoaderCircle className="animate-spin" /> : "Rename"}
+          </Button>
+        )}
+        <span className="text-xs text-muted-foreground">
+          {photoCount} photo{photoCount === 1 ? "" : "s"}
+        </span>
+        <div className="ml-auto flex items-center gap-1">
+          <MoveButtons index={index} count={count} onMove={onMove} disabled={moving} />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Delete ${category.name}`}
+            title={photoCount ? "Move or remove its photos first" : "Delete category"}
+            disabled={photoCount > 0 || remove.isPending}
+            onClick={() =>
+              confirm(`Delete the “${category.name}” category?`) &&
+              remove.mutate({ data: { id: category.id } })
+            }
+          >
+            <Trash2 />
+          </Button>
+        </div>
+      </div>
+      <ErrorLine error={rename.error ?? remove.error} />
     </div>
   );
 }

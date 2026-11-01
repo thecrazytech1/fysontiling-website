@@ -72,7 +72,9 @@ export const sitePhotos = pgTable(
     projectId: uuid("project_id").references(() => siteProjects.id, { onDelete: "cascade" }),
     src: text("src").notNull(),
     caption: text("caption").notNull().default(""),
-    category: text("category"),
+    category: text("category").references(() => siteGalleryCategories.name, {
+      onUpdate: "cascade",
+    }),
     magazinePage: boolean("magazine_page").notNull().default(false),
     categoryCover: boolean("category_cover").notNull().default(false),
     focus: text("focus").notNull().default("center"),
@@ -96,4 +98,14 @@ export const siteText = pgTable("site_text", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Inspiration gallery categories, in the order the site shows them. Photos refer to a
+// category by name, so renaming one moves its photos with it; a category with photos
+// can't be deleted.
+export const siteGalleryCategories = pgTable("site_gallery_categories", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -163,3 +163,7 @@
 - [x] Sitemap and llms.txt now follow the live projects; site falls back to built-in content if the database is unreachable
 - [ ] Apply migration 0004 on the server, then test the editor end to end
 - [ ] Not editable yet: Media page press cards, services list/titles, suburbs, contact details
+
+## Gallery categories (Nov 2)
+- [x] Shaun can add, rename, reorder and delete gallery categories from Admin → Gallery; renaming moves the photos with it, and a category with photos can't be deleted
+- [ ] Apply migrations 0004 and 0005 on the server

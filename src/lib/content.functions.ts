@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin.functions";
-import { galleryCategories, photoBucket } from "@/lib/site-content";
+import { photoBucket } from "@/lib/site-content";
 import { isTextKey } from "@/lib/site-text";
 
 // Public: the content every page renders (cached on the server, see content.server.ts).
@@ -17,13 +17,11 @@ async function db() {
   return supabaseAdmin;
 }
 
-function check<T>({ data, error }: { data: T; error: { message: string; code?: string } | null }) {
-  if (error)
-    throw new Error(
-      error.code === "23505"
-        ? "That web address is already used by another project."
-        : error.message,
-    );
+function check<T>(
+  { data, error }: { data: T; error: { message: string; code?: string } | null },
+  duplicate = "That web address is already used by another project.",
+) {
+  if (error) throw new Error(error.code === "23505" ? duplicate : error.message);
   return data;
 }
 
@@ -35,7 +33,9 @@ async function changed<T>(result: T) {
 }
 
 const id = z.string().uuid();
-const category = z.enum(galleryCategories).nullable();
+const categoryName = z.string().trim().min(1, "Give the category a name.").max(60);
+// Photos refer to categories by name; the database rejects a name that doesn't exist.
+const category = categoryName.nullable();
 const focus = z.enum(["center", "top", "bottom", "center top", "center bottom"]);
 
 export const getAdminContent = createServerFn({ method: "GET" })
@@ -44,7 +44,7 @@ export const getAdminContent = createServerFn({ method: "GET" })
     const supabase = await db();
     const { storageBase } = await import("@/lib/content.server");
     const { photoUrl } = await import("@/lib/site-content");
-    const [projects, photos, faqs, text] = await Promise.all([
+    const [projects, photos, faqs, text, categories] = await Promise.all([
       supabase
         .from("site_projects")
         .select(
@@ -59,6 +59,7 @@ export const getAdminContent = createServerFn({ method: "GET" })
         .order("sort_order"),
       supabase.from("site_faqs").select("id, question, answer, sort_order").order("sort_order"),
       supabase.from("site_text").select("key, value"),
+      supabase.from("site_gallery_categories").select("id, name, sort_order").order("sort_order"),
     ]);
     const base = storageBase();
     return {
@@ -66,6 +67,7 @@ export const getAdminContent = createServerFn({ method: "GET" })
       photos: (check(photos) ?? []).map((photo) => ({ ...photo, url: photoUrl(photo.src, base) })),
       faqs: check(faqs) ?? [],
       text: check(text) ?? [],
+      categories: check(categories) ?? [],
     };
   });
 
@@ -153,7 +155,7 @@ export const setProjectCover = createServerFn({ method: "POST" })
 
 // ---- Photos
 
-const orderLists = ["projects", "project-photos", "gallery", "faqs"] as const;
+const orderLists = ["projects", "project-photos", "gallery", "faqs", "categories"] as const;
 
 // Saves a new order after Shaun moves something up or down: ids are in display order.
 export const saveOrder = createServerFn({ method: "POST" })
@@ -169,12 +171,17 @@ export const saveOrder = createServerFn({ method: "POST" })
           return supabase.from("site_projects").update({ sort_order: index }).eq("id", rowId);
         if (data.list === "faqs")
           return supabase.from("site_faqs").update({ sort_order: index }).eq("id", rowId);
+        if (data.list === "categories")
+          return supabase
+            .from("site_gallery_categories")
+            .update({ sort_order: index })
+            .eq("id", rowId);
         if (data.list === "gallery")
           return supabase.from("site_photos").update({ gallery_order: index }).eq("id", rowId);
         return supabase.from("site_photos").update({ sort_order: index }).eq("id", rowId);
       }),
     );
-    results.forEach(check);
+    results.forEach((result) => check(result));
     return changed({ success: true });
   });
 
@@ -309,6 +316,66 @@ export const uploadPhoto = createServerFn({ method: "POST" })
       await supabase.storage.from(photoBucket).remove([path]);
       throw new Error(inserted.error.message);
     }
+    return changed({ success: true });
+  });
+
+// ---- Gallery categories
+
+const duplicateCategory = "There's already a category with that name.";
+
+export const saveCategory = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((data: unknown) =>
+    z.object({ id: id.optional(), name: categoryName }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    if (data.id) {
+      // Renaming carries the category's photos with it (ON UPDATE CASCADE).
+      check(
+        await supabase
+          .from("site_gallery_categories")
+          .update({ name: data.name })
+          .eq("id", data.id),
+        duplicateCategory,
+      );
+    } else {
+      const last = check(
+        await supabase
+          .from("site_gallery_categories")
+          .select("sort_order")
+          .order("sort_order", { ascending: false })
+          .limit(1),
+      );
+      check(
+        await supabase
+          .from("site_gallery_categories")
+          .insert({ name: data.name, sort_order: (last?.[0]?.sort_order ?? -1) + 1 }),
+        duplicateCategory,
+      );
+    }
+    return changed({ success: true });
+  });
+
+export const deleteCategory = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((data: unknown) => z.object({ id }).parse(data))
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const found = check(
+      await supabase.from("site_gallery_categories").select("name").eq("id", data.id).maybeSingle(),
+    );
+    if (!found) return { success: true };
+    const { count, error } = await supabase
+      .from("site_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("category", found.name);
+    if (error) throw new Error(error.message);
+    if (count)
+      throw new Error(
+        `“${found.name}” still has ${count} photo${count === 1 ? "" : "s"}. Move or remove them first.`,
+      );
+    check(await supabase.from("site_gallery_categories").delete().eq("id", data.id));
     return changed({ success: true });
   });
 
