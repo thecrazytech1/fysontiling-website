@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { RichT, T } from "@/components/rich-text";
 import { ArrowUpRight, CheckCircle2, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,10 +48,10 @@ export function EnquiryForm({ initialSuburb = "" }: { initialSuburb?: string }) 
     return (
       <div role="status" className="py-12">
         <CheckCircle2 className="mb-5 size-10 text-primary" />
-        <h2 className="font-display text-4xl">THANK YOU. YOU’RE ON THE LIST.</h2>
-        <p className="mt-4 text-sm leading-7 text-muted-foreground">
-          Your project enquiry has been received and saved for Shaun to review.
-        </p>
+        <h2 className="font-display text-4xl">
+          <T k="contact.thanksTitle" />
+        </h2>
+        <RichT k="contact.thanksText" className="mt-4 text-sm leading-7 text-muted-foreground" />
         <Button variant="outline" className="mt-7" onClick={() => setState("idle")}>
           Send another enquiry
         </Button>

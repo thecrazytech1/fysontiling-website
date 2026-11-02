@@ -109,3 +109,13 @@ export const siteGalleryCategories = pgTable("site_gallery_categories", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Photos chosen for fixed places on the pages (home hero, service cards, About portrait).
+// No row means the built-in photo from src/lib/site-images.ts; if the chosen photo is
+// deleted the slot falls back to it too.
+export const siteImages = pgTable("site_images", {
+  key: text("key").primaryKey(),
+  photoId: uuid("photo_id").references(() => sitePhotos.id, { onDelete: "set null" }),
+  focus: text("focus"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

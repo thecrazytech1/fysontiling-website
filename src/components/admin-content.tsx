@@ -17,17 +17,21 @@ import {
   deletePhoto,
   deleteProject,
   getAdminContent,
+  resetImage,
   resetText,
   saveCategory,
   saveFaq,
   saveOrder,
   saveProject,
+  saveImage,
   saveText,
   setProjectCover,
   updatePhoto,
   uploadPhoto,
 } from "@/lib/content.functions";
 import { textDefaults, type TextKey } from "@/lib/site-text";
+import { imageDefaults, type ImageKey } from "@/lib/site-images";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cleanDoc, parseRich, richToPlain } from "@/lib/rich-text";
 import { RichEditor } from "@/components/rich-editor";
 import { SortableList, type DragHandle } from "@/components/sortable-list";
@@ -883,11 +887,22 @@ export function TextAdmin() {
     const field = textDefaults[key];
     // Saved rich text is JSON; search its words, not the markup.
     const savedText = richToPlain(parseRich(saved.get(key) ?? ""));
-    return [field.group, field.label, field.value, savedText].some((s) =>
+    return [field.group, field.label, richToPlain(parseRich(field.value)), savedText].some((s) =>
       s.toLowerCase().includes(query),
     );
   });
-  const groups = [...new Set(keys.map((key) => textDefaults[key].group))];
+  const imageKeys = (Object.keys(imageDefaults) as ImageKey[]).filter((key) => {
+    if (!query) return true;
+    const slot = imageDefaults[key];
+    return [slot.group, slot.label, "photo", "image"].some((s) => s.toLowerCase().includes(query));
+  });
+  const savedImages = new Map(content.data.images.map((image) => [image.key, image]));
+  const groups = [
+    ...new Set([
+      ...keys.map((key) => textDefaults[key].group),
+      ...imageKeys.map((key) => imageDefaults[key].group),
+    ]),
+  ];
   return (
     <div className="grid gap-8">
       <div className="grid gap-2">
@@ -908,6 +923,17 @@ export function TextAdmin() {
       {groups.map((group) => (
         <section key={group} className="grid gap-4">
           <h2 className="font-display text-2xl">{group}</h2>
+          {imageKeys
+            .filter((key) => imageDefaults[key].group === group)
+            .map((key) => (
+              <ImageField
+                key={key}
+                imageKey={key}
+                saved={savedImages.get(key)}
+                photos={content.data.photos}
+                projects={content.data.projects}
+              />
+            ))}
           {keys
             .filter((key) => textDefaults[key].group === group)
             .map((key) => (
@@ -920,6 +946,199 @@ export function TextAdmin() {
         </section>
       ))}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- page photos
+
+const slotFocusOptions: Array<[string, string]> = [
+  ["default", "Crop: as originally set"],
+  ["center", "Crop: keep the middle"],
+  ["center top", "Crop: keep the top"],
+  ["center bottom", "Crop: keep the bottom"],
+];
+
+function ImageField({
+  imageKey,
+  saved,
+  photos,
+  projects,
+}: {
+  imageKey: ImageKey;
+  saved: AdminContent["images"][number] | undefined;
+  photos: AdminPhoto[];
+  projects: AdminProject[];
+}) {
+  const slot = imageDefaults[imageKey];
+  const chosen = saved?.photo_id ? photos.find((p) => p.id === saved.photo_id) : undefined;
+  const focus = saved?.focus ?? null;
+  const input = useRef<HTMLInputElement>(null);
+  const [picking, setPicking] = useState(false);
+  const save = useEdit(saveImage);
+  const reset = useEdit(resetImage);
+  const upload = useEdit(async (file: File) => {
+    const form = new FormData();
+    form.set("file", await shrinkPhoto(file));
+    form.set("forPage", "1");
+    form.set("projectId", "");
+    form.set("category", "");
+    form.set("caption", "");
+    const { id: photoId } = await uploadPhoto({ data: form });
+    await saveImage({ data: { key: imageKey, photoId, focus } });
+  });
+  const busy = save.isPending || reset.isPending || upload.isPending;
+  const choose = (photoId: string | null, newFocus: string | null = focus) =>
+    save.mutate({
+      data: {
+        key: imageKey,
+        photoId,
+        focus: newFocus as "center" | "center top" | "center bottom" | null,
+      },
+    });
+  return (
+    <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-[220px_1fr]">
+      <img
+        src={chosen?.url ?? slot.image}
+        alt=""
+        style={{ objectPosition: focus ?? slot.focus }}
+        className="aspect-[4/3] w-full rounded-md bg-secondary object-cover"
+      />
+      <div className="grid content-start gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Label>{slot.label}</Label>
+          {saved !== undefined && <Badge variant="outline">Edited</Badge>}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => setPicking(true)}>
+            Choose from photos
+          </Button>
+          <input
+            ref={input}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) upload.mutate(file);
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => input.current?.click()}
+          >
+            {upload.isPending ? <LoaderCircle className="animate-spin" /> : <ImagePlus />} Upload
+            new photo
+          </Button>
+          {saved !== undefined && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={() =>
+                confirm("Put the original photo back?") && reset.mutate({ data: { key: imageKey } })
+              }
+            >
+              <RotateCcw /> Back to original
+            </Button>
+          )}
+        </div>
+        <Select
+          value={focus ?? "default"}
+          onValueChange={(v) => choose(chosen?.id ?? null, v === "default" ? null : v)}
+        >
+          <SelectTrigger className="w-60 bg-background" aria-label="Crop">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {slotFocusOptions.map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <ErrorLine error={save.error ?? reset.error ?? upload.error} />
+      </div>
+      <PhotoPicker
+        open={picking}
+        onOpenChange={setPicking}
+        title={slot.label}
+        photos={photos}
+        projects={projects}
+        onPick={(photoId) => {
+          setPicking(false);
+          choose(photoId);
+        }}
+      />
+    </div>
+  );
+}
+
+// Every photo on the site (project and gallery photos, and earlier page uploads),
+// except printed magazine pages.
+function PhotoPicker({
+  open,
+  onOpenChange,
+  title,
+  photos,
+  projects,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  photos: AdminPhoto[];
+  projects: AdminProject[];
+  onPick: (photoId: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const titles = new Map(projects.map((p) => [p.id, p.title]));
+  const source = (photo: AdminPhoto) =>
+    (photo.project_id && titles.get(photo.project_id)) || photo.category || "Page photo";
+  const query = search.trim().toLowerCase();
+  const choices = photos
+    .filter((photo) => !photo.magazine_page)
+    .filter((photo) => !query || `${photo.caption} ${source(photo)}`.toLowerCase().includes(query));
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl">
+        <DialogTitle>Choose a photo: {title}</DialogTitle>
+        <DialogDescription>Pick any photo from your projects or gallery.</DialogDescription>
+        <Input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by caption, project or category"
+          className="h-10 bg-background"
+        />
+        <div className="grid max-h-[60svh] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
+          {choices.map((photo) => (
+            <button
+              key={photo.id}
+              type="button"
+              onClick={() => onPick(photo.id)}
+              className="group text-left focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              <img
+                src={photo.url}
+                alt={photo.caption}
+                loading="lazy"
+                className="aspect-[4/3] w-full rounded-md bg-secondary object-cover transition-opacity group-hover:opacity-80"
+              />
+              <span className="mt-1 block truncate text-xs text-muted-foreground">
+                {source(photo)}
+              </span>
+            </button>
+          ))}
+          {choices.length === 0 && (
+            <p className="col-span-full text-sm text-muted-foreground">No photos match.</p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -972,8 +1191,9 @@ function TextField({ textKey, saved }: { textKey: TextKey; saved: string | undef
             variant="ghost"
             disabled={reset.isPending}
             onClick={() =>
-              confirm(`Put this back to the original wording?\n\n“${field.value}”`) &&
-              reset.mutate({ data: { key: textKey } })
+              confirm(
+                `Put this back to the original wording?\n\n“${richToPlain(parseRich(field.value))}”`,
+              ) && reset.mutate({ data: { key: textKey } })
             }
           >
             <RotateCcw /> Back to original

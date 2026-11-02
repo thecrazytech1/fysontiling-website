@@ -43,6 +43,13 @@
       "when": 1793574660765,
       "tag": "0005_gallery_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793583731482,
+      "tag": "0006_page_images",
+      "breakpoints": true
     }
   ]
 }

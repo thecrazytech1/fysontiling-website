@@ -1,3 +1,5 @@
+import { contact } from "@/lib/site-data";
+
 // Every piece of page text Shaun can edit from /admin, with the wording the site
 // shipped with. The database only stores his changes; deleting one restores the default.
 //   heading — plain text; a line break starts a new line on the page
@@ -60,6 +62,21 @@ export const textDefaults = {
     "Services section (Home & Services)",
     "Intro",
     "From a kitchen refresh to a whole new bathroom, let’s make your space feel like you.",
+  ),
+  "services.1.title": plain(
+    "Services section (Home & Services)",
+    "Bathroom tiling — name",
+    "Bathroom tiling",
+  ),
+  "services.2.title": plain(
+    "Services section (Home & Services)",
+    "Kitchens & splashbacks — name",
+    "Kitchens & splashbacks",
+  ),
+  "services.3.title": plain(
+    "Services section (Home & Services)",
+    "Wall & floor tiling — name",
+    "Wall & floor tiling",
   ),
   "services.1.text": rich(
     "Services section (Home & Services)",
@@ -225,6 +242,7 @@ export const textDefaults = {
     "A look at the kinds of spaces we tile — bathrooms, kitchens, walls and floors. For the latest from Fyson Tiling, visit our Instagram or Facebook page.",
   ),
 
+  "projectsPage.eyebrow": plain("Projects page", "Small heading", "Fyson Tiling"),
   "projectsPage.title": heading("Projects page", "Page heading", "OUR PROJECTS."),
   "projectsPage.intro": rich(
     "Projects page",
@@ -240,11 +258,48 @@ export const textDefaults = {
     "Stories and features about Fyson Tiling from magazines and publications.",
   ),
 
+  "reviewsPage.eyebrow": plain("Reviews page", "Small heading", "From the community"),
   "reviewsPage.title": heading("Reviews page", "Page heading", "KIND WORDS."),
   "reviewsPage.intro": rich(
     "Reviews page",
     "Intro",
     "Genuine reviews from homeowners across the Mornington Peninsula and surrounds. Had Shaun tile your place? Your words would mean a lot — share them below.",
+  ),
+  "reviewsPage.formEyebrow": plain("Reviews page", "Review form — small heading", "Leave a review"),
+  "reviewsPage.formTitle": heading("Reviews page", "Review form — heading", "TELL US HOW IT WENT."),
+  "reviewsPage.formNote": rich(
+    "Reviews page",
+    "Review form — note",
+    JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Your review goes to Shaun first and appears here once approved. Happy to share it more widely? ",
+            },
+            {
+              type: "text",
+              text: "Leave it on Google too",
+              marks: [{ type: "link", attrs: { href: contact.googleReview } }],
+            },
+            { type: "text", text: "." },
+          ],
+        },
+      ],
+    }),
+  ),
+  "reviewsPage.thanksTitle": heading(
+    "Reviews page",
+    "After sending a review — heading",
+    "THANK YOU FOR YOUR KIND WORDS.",
+  ),
+  "reviewsPage.thanksText": rich(
+    "Reviews page",
+    "After sending a review — text",
+    "Your review has been received. Shaun reads every one, and it will appear on the website once he has approved it.",
   ),
 
   "faqPage.eyebrow": plain("FAQ page", "Small heading", "A little clarity"),
@@ -261,6 +316,16 @@ export const textDefaults = {
     "Contact page",
     "Note under the call button",
     "Tap to call Shaun directly. Prefer to write it down? Use the form and you’ll hear back.",
+  ),
+  "contact.thanksTitle": heading(
+    "Contact page",
+    "After sending an enquiry — heading",
+    "THANK YOU. YOU’RE ON THE LIST.",
+  ),
+  "contact.thanksText": rich(
+    "Contact page",
+    "After sending an enquiry — text",
+    "Your project enquiry has been received and saved for Shaun to review.",
   ),
 } satisfies Record<string, TextField>;
 

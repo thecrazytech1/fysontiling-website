@@ -95,6 +95,35 @@ export type Database = {
         }
         Relationships: []
       }
+      site_images: {
+        Row: {
+          focus: string | null
+          key: string
+          photo_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          focus?: string | null
+          key: string
+          photo_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          focus?: string | null
+          key?: string
+          photo_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_images_photo_id_site_photos_id_fk"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "site_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_photos: {
         Row: {
           caption: string

@@ -177,3 +177,11 @@
 - [x] Projects, project photos, gallery photos, gallery categories and FAQs are reordered by dragging the ⠿ handle (mouse, touch or keyboard) instead of arrow buttons
 - [x] Fixed reorder glitches: the list now updates instantly, saves run in order, the server only writes rows that moved, and newly categorised photos no longer tie with others in the gallery
 - [x] Requests abandoned by the browser are no longer logged as server errors
+
+## More editable headings (Nov 2)
+- [x] Service card names, Projects/Reviews small headings, the review form heading and note, and the thank-you messages after sending an enquiry or review are now in Admin → Page text (74 fields)
+- [ ] Still fixed in code: button labels (e.g. "Talk about your project"), footer headings, navigation
+
+## Page photos (Nov 2)
+- [x] The home page hero, the three service card photos and the About portrait can be changed in Admin → Page text: choose any project/gallery photo or upload a new one, set the crop, or go back to the original (choices stored in `site_images`, migration 0006)
+- [ ] Link previews (og:image) and Google business data still use the built-in hero photo

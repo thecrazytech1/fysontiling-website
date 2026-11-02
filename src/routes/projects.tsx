@@ -15,7 +15,7 @@ export const Route = createFileRoute('/projects')({
 function ProjectsPage() {
   const { projects } = useSiteContent();
   return <>
-    <section className="border-b border-border py-14 md:py-20"><div className="site-width"><p className="eyebrow mb-3 text-primary">Fyson Tiling</p><h1 className="page-title"><T k="projectsPage.title"/></h1><RichT k="projectsPage.intro" className="mt-5 max-w-md text-sm leading-7 text-muted-foreground" /></div></section>
+    <section className="border-b border-border py-14 md:py-20"><div className="site-width"><p className="eyebrow mb-3 text-primary"><T k="projectsPage.eyebrow"/></p><h1 className="page-title"><T k="projectsPage.title"/></h1><RichT k="projectsPage.intro" className="mt-5 max-w-md text-sm leading-7 text-muted-foreground" /></div></section>
     <section className="py-12 md:py-16"><div className="site-width grid gap-10 md:grid-cols-2">
       {projects.map(project => <article key={project.slug} className="min-w-0">
         <Link to="/projects/$slug" params={{ slug: project.slug }} aria-label={`Explore ${project.title}`} className="block overflow-hidden rounded-md bg-secondary"><img src={project.cover} alt={project.publication ? `${project.title} in ${project.publication}` : `${project.title} by Fyson Tiling`} style={{ objectPosition: project.coverFocus }} className="aspect-[4/3] w-full object-cover"/></Link>

@@ -1,6 +1,8 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { bundledAssetUrl } from "@/lib/site-data";
 import { textDefaults, type TextKey } from "@/lib/site-text";
+import { parseRich, richToPlain } from "@/lib/rich-text";
+import { imageDefaults, type ImageKey } from "@/lib/site-images";
 
 // Rows as stored in the site_* tables (see drizzle/schema.ts).
 export type ProjectRow = {
@@ -34,12 +36,15 @@ export type TextRow = { key: string; value: string };
 
 export type CategoryRow = { id: string; name: string; sort_order: number };
 
+export type ImageRow = { key: string; photo_id: string | null; focus: string | null };
+
 export type ContentRows = {
   projects: ProjectRow[];
   photos: PhotoRow[];
   faqs: FaqRow[];
   text: TextRow[];
   categories: CategoryRow[];
+  images: ImageRow[];
 };
 
 // Shapes the pages render.
@@ -70,6 +75,8 @@ export type SiteContent = {
   gallery: GalleryItem[];
   // Gallery categories that have photos, in Shaun's order.
   categories: string[];
+  // Page photos Shaun has chosen; missing keys use the built-in photo.
+  images: Partial<Record<ImageKey, { url: string; focus: string | null; caption: string }>>;
   faqs: Array<[question: string, answer: string]>;
   text: Partial<Record<TextKey, string>>;
 };
@@ -133,10 +140,17 @@ export function assembleContent(rows: ContentRows, storageBase: string): SiteCon
     .sort(byOrder)
     .map((category) => category.name)
     .filter((name) => gallery.some((item) => item.type === name));
+  const images: SiteContent["images"] = {};
+  for (const row of rows.images) {
+    const photo = row.photo_id ? rows.photos.find((p) => p.id === row.photo_id) : undefined;
+    if (photo && row.key in imageDefaults)
+      images[row.key as ImageKey] = { url: url(photo), focus: row.focus, caption: photo.caption };
+  }
   return {
     projects,
     gallery,
     categories,
+    images,
     faqs: [...rows.faqs].sort(byOrder).map((faq) => [faq.question, faq.answer]),
     text,
   };
@@ -145,6 +159,23 @@ export function assembleContent(rows: ContentRows, storageBase: string): SiteCon
 // The root route loads the content once; every page reads it from there.
 const rootRoute = getRouteApi("__root__");
 export const useSiteContent = (): SiteContent => rootRoute.useLoaderData();
+
+// The words of a text field without formatting, for places like image descriptions.
+// A page photo: Shaun's choice if he made one, otherwise the built-in photo.
+export function useImage(key: ImageKey) {
+  const chosen = useSiteContent().images[key];
+  const slot = imageDefaults[key];
+  return {
+    src: chosen?.url ?? slot.image,
+    focus: chosen?.focus ?? slot.focus,
+    alt: chosen?.caption || slot.alt,
+  };
+}
+
+export function usePlainText() {
+  const text = useText();
+  return (key: TextKey) => richToPlain(parseRich(text(key)));
+}
 
 export function useText() {
   const { text } = useSiteContent();

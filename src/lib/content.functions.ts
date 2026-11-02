@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin.functions";
 import { photoBucket } from "@/lib/site-content";
 import { isRichKey, isTextKey } from "@/lib/site-text";
+import { isImageKey } from "@/lib/site-images";
 import { richDocSchema, richToPlain } from "@/lib/rich-text";
 
 // Public: the content every page renders (cached on the server, see content.server.ts).
@@ -45,7 +46,7 @@ export const getAdminContent = createServerFn({ method: "GET" })
     const supabase = await db();
     const { storageBase } = await import("@/lib/content.server");
     const { photoUrl } = await import("@/lib/site-content");
-    const [projects, photos, faqs, text, categories] = await Promise.all([
+    const [projects, photos, faqs, text, categories, images] = await Promise.all([
       supabase
         .from("site_projects")
         .select(
@@ -61,6 +62,7 @@ export const getAdminContent = createServerFn({ method: "GET" })
       supabase.from("site_faqs").select("id, question, answer, sort_order").order("sort_order"),
       supabase.from("site_text").select("key, value"),
       supabase.from("site_gallery_categories").select("id, name, sort_order").order("sort_order"),
+      supabase.from("site_images").select("key, photo_id, focus"),
     ]);
     const base = storageBase();
     return {
@@ -69,6 +71,7 @@ export const getAdminContent = createServerFn({ method: "GET" })
       faqs: check(faqs) ?? [],
       text: check(text) ?? [],
       categories: check(categories) ?? [],
+      images: check(images) ?? [],
     };
   });
 
@@ -307,19 +310,27 @@ export const uploadPhoto = createServerFn({ method: "POST" })
         projectId: id.nullable(),
         category,
         caption: z.string().trim().max(400),
+        // A photo for a page slot (hero, service card…): kept out of projects and the gallery.
+        forPage: z.boolean(),
       })
       .parse({
         projectId: data.get("projectId") || null,
         category: data.get("category") || null,
         caption: data.get("caption") ?? "",
+        forPage: data.get("forPage") === "1",
       });
     return { ...fields, file };
   })
   .handler(async ({ data }) => {
-    if (data.projectId === null && data.category === null)
+    if (data.projectId === null && data.category === null && !data.forPage)
       throw new Error("Choose a gallery category for this photo.");
     const supabase = await db();
-    const path = `${data.projectId ? `projects/${data.projectId}` : "gallery"}/${crypto.randomUUID()}.${uploadTypes[data.file.type]}`;
+    const folder = data.projectId
+      ? `projects/${data.projectId}`
+      : data.forPage
+        ? "pages"
+        : "gallery";
+    const path = `${folder}/${crypto.randomUUID()}.${uploadTypes[data.file.type]}`;
     const upload = await supabase.storage
       .from(photoBucket)
       .upload(path, await data.file.arrayBuffer(), {
@@ -341,19 +352,23 @@ export const uploadPhoto = createServerFn({ method: "POST" })
     const firstInGallery = check(
       await supabase.from("site_photos").select("gallery_order").order("gallery_order").limit(1),
     );
-    const inserted = await supabase.from("site_photos").insert({
-      project_id: data.projectId,
-      src: `storage:${path}`,
-      caption: data.caption,
-      category: data.category,
-      sort_order: (lastInProject?.[0]?.sort_order ?? -1) + 1,
-      gallery_order: (firstInGallery?.[0]?.gallery_order ?? 0) - 1,
-    });
+    const inserted = await supabase
+      .from("site_photos")
+      .insert({
+        project_id: data.projectId,
+        src: `storage:${path}`,
+        caption: data.caption,
+        category: data.forPage ? null : data.category,
+        sort_order: (lastInProject?.[0]?.sort_order ?? -1) + 1,
+        gallery_order: (firstInGallery?.[0]?.gallery_order ?? 0) - 1,
+      })
+      .select("id")
+      .single();
     if (inserted.error) {
       await supabase.storage.from(photoBucket).remove([path]);
       throw new Error(inserted.error.message);
     }
-    return changed({ success: true });
+    return changed({ id: inserted.data.id });
   });
 
 // ---- Gallery categories
@@ -413,6 +428,68 @@ export const deleteCategory = createServerFn({ method: "POST" })
         `“${found.name}” still has ${count} photo${count === 1 ? "" : "s"}. Move or remove them first.`,
       );
     check(await supabase.from("site_gallery_categories").delete().eq("id", data.id));
+    return changed({ success: true });
+  });
+
+// ---- Page photos (home hero, service cards, About portrait)
+
+const imageKey = z.string().refine(isImageKey, "Unknown page photo.");
+const slotFocus = focus.nullable();
+
+// A photo uploaded just for a page slot belongs to nothing else, so once no slot uses it
+// it's deleted along with its file. Project and gallery photos are never touched.
+async function removeIfUnused(photoId: string | null | undefined) {
+  if (!photoId) return;
+  const supabase = await db();
+  const photo = check(
+    await supabase
+      .from("site_photos")
+      .select("src, project_id, category")
+      .eq("id", photoId)
+      .maybeSingle(),
+  );
+  if (!photo || photo.project_id !== null || photo.category !== null) return;
+  const { count, error } = await supabase
+    .from("site_images")
+    .select("key", { count: "exact", head: true })
+    .eq("photo_id", photoId);
+  if (error || count) return;
+  check(await supabase.from("site_photos").delete().eq("id", photoId));
+  await removeUploads([photo.src]);
+}
+
+export const saveImage = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((data: unknown) =>
+    z.object({ key: imageKey, photoId: id.nullable(), focus: slotFocus }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const before = check(
+      await supabase.from("site_images").select("photo_id").eq("key", data.key).maybeSingle(),
+    );
+    check(
+      await supabase.from("site_images").upsert({
+        key: data.key,
+        photo_id: data.photoId,
+        focus: data.focus,
+        updated_at: new Date().toISOString(),
+      }),
+    );
+    if (before?.photo_id !== data.photoId) await removeIfUnused(before?.photo_id);
+    return changed({ success: true });
+  });
+
+export const resetImage = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((data: unknown) => z.object({ key: imageKey }).parse(data))
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const before = check(
+      await supabase.from("site_images").select("photo_id").eq("key", data.key).maybeSingle(),
+    );
+    check(await supabase.from("site_images").delete().eq("key", data.key));
+    await removeIfUnused(before?.photo_id);
     return changed({ success: true });
   });
 

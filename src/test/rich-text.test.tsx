@@ -139,3 +139,21 @@ describe("Rich page text", () => {
     expect(richToPlain(doc!)).toContain("one");
   });
 });
+
+describe("Page text defaults", () => {
+  it("every default is valid text, and the review note keeps its Google link", async () => {
+    const { textDefaults } = await import("@/lib/site-text");
+    for (const [key, field] of Object.entries(textDefaults)) {
+      const doc = parseRich(field.value);
+      expect(richToPlain(doc).trim(), key).not.toBe("");
+      if (field.kind !== "rich")
+        expect(
+          doc.content.every((b) => b.type === "paragraph"),
+          key,
+        ).toBe(true);
+    }
+    const note = parseRich(textDefaults["reviewsPage.formNote"].value);
+    expect(JSON.stringify(note)).toContain("g.page");
+    expect(richToPlain(note)).toContain("Leave it on Google too.");
+  });
+});

@@ -10,12 +10,20 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useState } from "react";
-import { services, contact, press, aboutPhoto } from "@/lib/site-data";
-import { useSiteContent } from "@/lib/site-content";
+import { services, contact, press } from "@/lib/site-data";
+import { useImage, usePlainText, useSiteContent } from "@/lib/site-content";
 
+// One hook call per service card (a fixed three), in card order.
+function useServiceImages() {
+  return [useImage("services.1.image"), useImage("services.2.image"), useImage("services.3.image")];
+}
+
+const serviceTitleKeys = ["services.1.title", "services.2.title", "services.3.title"] as const;
 const serviceTextKeys = ["services.1.text", "services.2.text", "services.3.text"] as const;
 
 export function ServicesSection() {
+  const serviceImages = useServiceImages();
+  const plainText = usePlainText();
   return (
     <section className="py-16 md:py-24">
       <div className="site-width">
@@ -35,14 +43,17 @@ export function ServicesSection() {
             <article key={s.title} className="group">
               <Link to="/contact" className="block overflow-hidden rounded-md">
                 <img
-                  src={s.image}
-                  alt={`${s.title} by Fyson Tiling`}
+                  src={serviceImages[i]?.src}
+                  alt={`${plainText(serviceTitleKeys[i] ?? "services.1.title")} by Fyson Tiling`}
                   loading="lazy"
+                  style={{ objectPosition: serviceImages[i]?.focus }}
                   className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </Link>
               <div className="mt-5 flex items-center justify-between">
-                <h3 className="text-lg font-medium">{s.title}</h3>
+                <h3 className="text-lg font-medium">
+                  <T k={serviceTitleKeys[i] ?? "services.1.title"} />
+                </h3>
                 <span className="eyebrow text-primary">{s.number}</span>
               </div>
               <RichT
@@ -80,7 +91,8 @@ export function GallerySection({
   );
   const items = full ? gallery.filter((g) => filter === "All" || g.type === filter) : [];
   const item = selected === null ? null : items[selected];
-  const shown = new Set(services.map((s) => s.image));
+  // Category cards avoid repeating the photos already used on the service cards.
+  const shown = new Set(useServiceImages().map((image) => image.src));
   const categoryCards = types
     .filter((t) => t !== "All")
     .map((t) => ({
@@ -261,14 +273,16 @@ export function ProjectsSection({ limit }: { limit?: number | undefined }) {
   );
 }
 export function AboutSection() {
+  const photo = useImage("about.photo");
   return (
     <section className="py-16 md:py-24">
       <div className="site-width grid items-center gap-10 md:grid-cols-2 md:gap-20">
         <div className="relative">
           <img
-            src={aboutPhoto}
-            alt="The people behind Fyson Tiling"
+            src={photo.src}
+            alt={photo.alt}
             loading="lazy"
+            style={{ objectPosition: photo.focus }}
             className="aspect-square max-h-[520px] w-full rounded-md object-cover"
           />
         </div>
