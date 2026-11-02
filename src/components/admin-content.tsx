@@ -2,9 +2,7 @@ import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "rea
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useRouter } from "@tanstack/react-router";
 import {
-  ArrowDown,
   ArrowLeft,
-  ArrowUp,
   ExternalLink,
   ImagePlus,
   LoaderCircle,
@@ -32,6 +30,8 @@ import {
 import { textDefaults, type TextKey } from "@/lib/site-text";
 import { cleanDoc, parseRich, richToPlain } from "@/lib/rich-text";
 import { RichEditor } from "@/components/rich-editor";
+import { SortableList, type DragHandle } from "@/components/sortable-list";
+import { placeInSlots, withOrder, type OrderList } from "@/lib/admin-order";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,13 +72,32 @@ const slugify = (title: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-// Returns ids with the item at `index` swapped one place up (-1) or down (+1).
-function moved(ids: string[], index: number, direction: -1 | 1) {
-  const target = index + direction;
-  if (target < 0 || target >= ids.length) return ids;
-  const next = [...ids];
-  [next[index], next[target]] = [next[target]!, next[index]!];
-  return next;
+const reorderKey = ["admin", "reorder"] as const;
+
+// Drag-and-drop saves: the list updates immediately, saves run one at a time in order,
+// and fresh data is only fetched once the last queued save has finished.
+function useReorder(list: OrderList) {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  return useMutation({
+    mutationKey: reorderKey,
+    scope: { id: "reorder" },
+    mutationFn: (ids: string[]) => saveOrder({ data: { list, ids } }),
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: contentKey });
+      const previous = queryClient.getQueryData<AdminContent>(contentKey);
+      if (previous) queryClient.setQueryData(contentKey, withOrder(previous, list, ids));
+      return { previous };
+    },
+    onError: (_error, _ids, context) => {
+      if (context?.previous) queryClient.setQueryData(contentKey, context.previous);
+    },
+    onSettled: async () => {
+      if (queryClient.isMutating({ mutationKey: reorderKey }) > 1) return;
+      await queryClient.invalidateQueries({ queryKey: contentKey });
+      await router.invalidate();
+    },
+  });
 }
 
 function useAdminContent() {
@@ -114,41 +133,6 @@ function ErrorLine({ error }: { error: unknown }) {
 
 function Loading() {
   return <LoaderCircle className="animate-spin text-muted-foreground" />;
-}
-
-function MoveButtons({
-  index,
-  count,
-  onMove,
-  disabled,
-}: {
-  index: number;
-  count: number;
-  onMove: (direction: -1 | 1) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="flex gap-1">
-      <Button
-        variant="outline"
-        size="icon"
-        aria-label="Move up"
-        disabled={disabled || index === 0}
-        onClick={() => onMove(-1)}
-      >
-        <ArrowUp />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        aria-label="Move down"
-        disabled={disabled || index === count - 1}
-        onClick={() => onMove(1)}
-      >
-        <ArrowDown />
-      </Button>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------- photo upload
@@ -256,20 +240,14 @@ function PhotoUploader({
 
 function PhotoCard({
   photo,
-  index,
-  count,
-  onMove,
-  moving,
+  handle,
   mode,
   isCover,
   onSetCover,
   projectTitle,
 }: {
   photo: AdminPhoto;
-  index: number;
-  count: number;
-  onMove: (direction: -1 | 1) => void;
-  moving: boolean;
+  handle: DragHandle;
   mode: "project" | "gallery";
   isCover?: boolean;
   onSetCover?: () => void;
@@ -316,6 +294,7 @@ function PhotoCard({
       </a>
       <div className="grid gap-3">
         <div className="flex flex-wrap items-center gap-2">
+          {handle}
           {mode === "project" && isCover && <Badge>Cover photo</Badge>}
           {mode === "project" && magazinePage && <Badge variant="outline">Magazine page</Badge>}
           {mode === "gallery" && photo.category_cover && <Badge>Category cover</Badge>}
@@ -325,7 +304,6 @@ function PhotoCard({
             </span>
           )}
           <div className="ml-auto flex items-center gap-1">
-            <MoveButtons index={index} count={count} onMove={onMove} disabled={moving} />
             <Button
               variant="ghost"
               size="icon"
@@ -425,7 +403,7 @@ function PhotoCard({
 export function ProjectsAdmin() {
   const content = useAdminContent();
   const [editing, setEditing] = useState<string | "new" | null>(null);
-  const reorder = useEdit(saveOrder);
+  const reorder = useReorder("projects");
   if (content.isPending) return <Loading />;
   if (content.isError) return <ErrorLine error={content.error} />;
   const { projects, photos } = content.data;
@@ -441,12 +419,12 @@ export function ProjectsAdmin() {
       />
     );
   }
-  const ids = projects.map((p) => p.id);
   return (
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Projects show in this order on the site. The first three appear on the home page.
+          Drag ⠿ to reorder. Projects show in this order on the site. The first three appear on the
+          home page.
         </p>
         <Button onClick={() => setEditing("new")} className="rounded-full">
           <Plus /> Add a project
@@ -454,55 +432,51 @@ export function ProjectsAdmin() {
       </div>
       <ErrorLine error={reorder.error} />
       {projects.length === 0 && <p className="text-sm text-muted-foreground">No projects yet.</p>}
-      {projects.map((project, index) => {
-        const projectPhotos = photos.filter((p) => p.project_id === project.id);
-        const cover =
-          projectPhotos.find((p) => p.id === project.cover_photo_id) ??
-          projectPhotos.find((p) => !p.magazine_page) ??
-          projectPhotos[0];
-        return (
-          <article
-            key={project.id}
-            className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card p-4"
-          >
-            {cover ? (
-              <img
-                src={cover.url}
-                alt=""
-                className="aspect-[4/3] w-28 rounded-md object-cover"
-                style={{ objectPosition: project.cover_focus }}
-              />
-            ) : (
-              <div className="aspect-[4/3] w-28 rounded-md bg-secondary" />
-            )}
-            <div className="min-w-0 grow">
-              <h3 className="text-lg font-medium">
-                {project.title}{" "}
-                {!project.published && (
-                  <Badge variant="outline" className="ml-1 align-middle">
-                    Hidden
-                  </Badge>
-                )}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {projectPhotos.length} photo{projectPhotos.length === 1 ? "" : "s"}
-                {project.publication && ` · ${project.publication}`}
-              </p>
-            </div>
-            <MoveButtons
-              index={index}
-              count={projects.length}
-              disabled={reorder.isPending}
-              onMove={(d) =>
-                reorder.mutate({ data: { list: "projects", ids: moved(ids, index, d) } })
-              }
-            />
-            <Button variant="outline" onClick={() => setEditing(project.id)}>
-              Edit
-            </Button>
-          </article>
-        );
-      })}
+      <SortableList
+        items={projects}
+        label={(project) => project.title}
+        onReorder={(ids) => reorder.mutate(ids)}
+      >
+        {(project, handle) => {
+          const projectPhotos = photos.filter((p) => p.project_id === project.id);
+          const cover =
+            projectPhotos.find((p) => p.id === project.cover_photo_id) ??
+            projectPhotos.find((p) => !p.magazine_page) ??
+            projectPhotos[0];
+          return (
+            <article className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card p-4">
+              {handle}
+              {cover ? (
+                <img
+                  src={cover.url}
+                  alt=""
+                  className="aspect-[4/3] w-28 rounded-md object-cover"
+                  style={{ objectPosition: project.cover_focus }}
+                />
+              ) : (
+                <div className="aspect-[4/3] w-28 rounded-md bg-secondary" />
+              )}
+              <div className="min-w-0 grow">
+                <h3 className="text-lg font-medium">
+                  {project.title}{" "}
+                  {!project.published && (
+                    <Badge variant="outline" className="ml-1 align-middle">
+                      Hidden
+                    </Badge>
+                  )}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {projectPhotos.length} photo{projectPhotos.length === 1 ? "" : "s"}
+                  {project.publication && ` · ${project.publication}`}
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => setEditing(project.id)}>
+                Edit
+              </Button>
+            </article>
+          );
+        }}
+      </SortableList>
     </div>
   );
 }
@@ -525,7 +499,7 @@ function ProjectEditor({
   const [coverFocus, setCoverFocus] = useState<Focus>(asFocus(project?.cover_focus ?? "center"));
   const save = useEdit(saveProject);
   const remove = useEdit(deleteProject);
-  const reorder = useEdit(saveOrder);
+  const reorder = useReorder("project-photos");
   const cover = useEdit(setProjectCover);
   const shownSlug = slugTouched ? slug : slugify(title);
 
@@ -537,7 +511,6 @@ function ProjectEditor({
       ),
     [photos],
   );
-  const ids = ordered.map((p) => p.id);
   const coverId =
     project?.cover_photo_id ?? ordered.find((p) => !p.magazine_page)?.id ?? ordered[0]?.id;
 
@@ -685,23 +658,24 @@ function ProjectEditor({
           <h2 className="font-display text-3xl">PHOTOS.</h2>
           <PhotoUploader projectId={project.id} />
           <ErrorLine error={reorder.error ?? cover.error} />
-          {ordered.map((photo, index) => (
-            <PhotoCard
-              key={`${photo.id}-${photo.caption}-${photo.category}-${photo.magazine_page}`}
-              photo={photo}
-              index={index}
-              count={ordered.length}
-              moving={reorder.isPending}
-              onMove={(d) =>
-                reorder.mutate({ data: { list: "project-photos", ids: moved(ids, index, d) } })
-              }
-              mode="project"
-              isCover={photo.id === coverId}
-              onSetCover={() =>
-                cover.mutate({ data: { projectId: project.id, photoId: photo.id } })
-              }
-            />
-          ))}
+          <SortableList
+            items={ordered}
+            label={(photo) => photo.caption || "photo"}
+            onReorder={(ids) => reorder.mutate(ids)}
+          >
+            {(photo, handle) => (
+              <PhotoCard
+                key={`${photo.id}-${photo.caption}-${photo.category}-${photo.magazine_page}`}
+                photo={photo}
+                handle={handle}
+                mode="project"
+                isCover={photo.id === coverId}
+                onSetCover={() =>
+                  cover.mutate({ data: { projectId: project.id, photoId: photo.id } })
+                }
+              />
+            )}
+          </SortableList>
         </section>
       ) : (
         <p className="text-sm text-muted-foreground">
@@ -717,33 +691,33 @@ function ProjectEditor({
 export function GalleryAdmin() {
   const content = useAdminContent();
   const [filter, setFilter] = useState("All");
-  const reorder = useEdit(saveOrder);
+  const reorder = useReorder("gallery");
   if (content.isPending) return <Loading />;
   if (content.isError) return <ErrorLine error={content.error} />;
   const { photos, projects } = content.data;
   const titles = new Map(projects.map((p) => [p.id, p.title]));
   const gallery = photos
     .filter((p) => p.category && !p.magazine_page)
-    .sort((a, b) => a.gallery_order - b.gallery_order);
+    .sort((a, b) => a.gallery_order - b.gallery_order || a.id.localeCompare(b.id));
   const shown = gallery.filter((p) => filter === "All" || p.category === filter);
-  const allIds = gallery.map((p) => p.id);
 
-  // Moving within a filtered list swaps with the neighbour in that category.
-  function move(photo: AdminPhoto, direction: -1 | 1) {
-    const neighbour = shown[shown.indexOf(photo) + direction];
-    if (!neighbour) return;
-    const ids = [...allIds];
-    const a = ids.indexOf(photo.id);
-    const b = ids.indexOf(neighbour.id);
-    [ids[a], ids[b]] = [ids[b]!, ids[a]!];
-    reorder.mutate({ data: { list: "gallery", ids } });
+  // Dragging within one category reorders those photos among the slots they already hold
+  // in the full gallery, so the other categories keep their places.
+  function reorderShown(shownIds: string[]) {
+    reorder.mutate(
+      placeInSlots(
+        gallery.map((p) => p.id),
+        shownIds,
+      ),
+    );
   }
 
   return (
     <div className="grid gap-5">
       <p className="text-sm text-muted-foreground">
-        The inspiration gallery shows these photos in this order. Project photos appear here when
-        they have a gallery category. Each category's cover photo is the one shown on the home page.
+        Drag ⠿ to reorder. The inspiration gallery shows these photos in this order. Project photos
+        appear here when they have a gallery category. Each category's cover photo is the one shown
+        on the home page.
       </p>
       <CategoriesAdmin categories={content.data.categories} photos={photos} />
       <PhotoUploader projectId={null} requireCategory />
@@ -760,18 +734,21 @@ export function GalleryAdmin() {
         ))}
       </div>
       <ErrorLine error={reorder.error} />
-      {shown.map((photo, index) => (
-        <PhotoCard
-          key={`${photo.id}-${photo.caption}-${photo.category}-${photo.focus}`}
-          photo={photo}
-          index={index}
-          count={shown.length}
-          moving={reorder.isPending}
-          onMove={(d) => move(photo, d)}
-          mode="gallery"
-          projectTitle={photo.project_id ? titles.get(photo.project_id) : undefined}
-        />
-      ))}
+      <SortableList
+        items={shown}
+        label={(photo) => photo.caption || "photo"}
+        onReorder={reorderShown}
+      >
+        {(photo, handle) => (
+          <PhotoCard
+            key={`${photo.id}-${photo.caption}-${photo.category}-${photo.focus}`}
+            photo={photo}
+            handle={handle}
+            mode="gallery"
+            projectTitle={photo.project_id ? titles.get(photo.project_id) : undefined}
+          />
+        )}
+      </SortableList>
     </div>
   );
 }
@@ -785,10 +762,9 @@ function CategoriesAdmin({
   categories: AdminContent["categories"];
   photos: AdminPhoto[];
 }) {
-  const reorder = useEdit(saveOrder);
+  const reorder = useReorder("categories");
   const add = useEdit(saveCategory);
   const [name, setName] = useState("");
-  const ids = categories.map((c) => c.id);
   function submit(event: FormEvent) {
     event.preventDefault();
     add.mutate({ data: { name } }, { onSuccess: () => setName("") });
@@ -798,24 +774,26 @@ function CategoriesAdmin({
       <div>
         <h2 className="font-display text-2xl">CATEGORIES.</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          The gallery's filter buttons, in this order. The first three appear on the home page. A
-          category only shows on the site once it has photos.
+          Drag ⠿ to reorder. The gallery's filter buttons, in this order. The first three appear on
+          the home page. A category only shows on the site once it has photos.
         </p>
       </div>
       <ErrorLine error={reorder.error} />
-      {categories.map((category, index) => (
-        <CategoryRow
-          key={`${category.id}-${category.name}`}
-          category={category}
-          photoCount={photos.filter((p) => p.category === category.name).length}
-          index={index}
-          count={categories.length}
-          moving={reorder.isPending}
-          onMove={(d) =>
-            reorder.mutate({ data: { list: "categories", ids: moved(ids, index, d) } })
-          }
-        />
-      ))}
+      <SortableList
+        items={categories}
+        label={(category) => category.name}
+        onReorder={(ids) => reorder.mutate(ids)}
+        className="gap-2"
+      >
+        {(category, handle) => (
+          <CategoryRow
+            key={`${category.id}-${category.name}`}
+            category={category}
+            photoCount={photos.filter((p) => p.category === category.name).length}
+            handle={handle}
+          />
+        )}
+      </SortableList>
       <form onSubmit={submit} className="flex flex-wrap gap-2">
         <Input
           value={name}
@@ -837,24 +815,19 @@ function CategoriesAdmin({
 function CategoryRow({
   category,
   photoCount,
-  index,
-  count,
-  moving,
-  onMove,
+  handle,
 }: {
   category: AdminContent["categories"][number];
   photoCount: number;
-  index: number;
-  count: number;
-  moving: boolean;
-  onMove: (direction: -1 | 1) => void;
+  handle: DragHandle;
 }) {
   const [name, setName] = useState(category.name);
   const rename = useEdit(saveCategory);
   const remove = useEdit(deleteCategory);
   return (
-    <div className="grid gap-1">
+    <div className="grid gap-1 rounded-xl bg-background/60 p-1">
       <div className="flex flex-wrap items-center gap-2">
+        {handle}
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -876,7 +849,6 @@ function CategoryRow({
           {photoCount} photo{photoCount === 1 ? "" : "s"}
         </span>
         <div className="ml-auto flex items-center gap-1">
-          <MoveButtons index={index} count={count} onMove={onMove} disabled={moving} />
           <Button
             variant="ghost"
             size="icon"
@@ -920,9 +892,10 @@ export function TextAdmin() {
     <div className="grid gap-8">
       <div className="grid gap-2">
         <p className="text-sm text-muted-foreground">
-          Edit the wording on each page. Paragraphs have a toolbar for bold, italic, links and lists
-          (Shift+Enter for a line break without a new paragraph). In headings, press Enter to start
-          a new line. “Back to original” restores the wording the site launched with.
+          Edit the wording on each page with the toolbar: bold, italic and links everywhere, plus
+          lists in paragraphs. In paragraphs, Enter starts a new paragraph (Shift+Enter for a line
+          break); in headings and short lines, Enter starts a new line. “Back to original” restores
+          the wording the site launched with.
         </p>
         <Input
           type="search"
@@ -955,12 +928,11 @@ function TextField({ textKey, saved }: { textKey: TextKey; saved: string | undef
   const current = saved ?? field.value;
   const save = useEdit(saveText);
   const reset = useEdit(resetText);
-  const rich = field.kind === "rich";
-  // Rich fields are edited as a document and saved as its JSON; others as plain text.
-  const currentValue = rich ? JSON.stringify(cleanDoc(parseRich(current))) : current;
+  // Every field is edited with the same editor and saved as its JSON document.
+  const currentValue = JSON.stringify(cleanDoc(parseRich(current)));
   const [value, setValue] = useState(currentValue);
   const [editorKey, setEditorKey] = useState(0);
-  const empty = rich ? richToPlain(parseRich(value)).trim() === "" : value.trim() === "";
+  const empty = richToPlain(parseRich(value)).trim() === "";
   const undo = () => {
     setValue(currentValue);
     setEditorKey((k) => k + 1);
@@ -971,31 +943,15 @@ function TextField({ textKey, saved }: { textKey: TextKey; saved: string | undef
         <Label htmlFor={textKey}>{field.label}</Label>
         {saved !== undefined && <Badge variant="outline">Edited</Badge>}
       </div>
-      {rich ? (
-        <RichEditor
-          key={editorKey}
-          id={textKey}
-          initial={parseRich(current)}
-          onChange={(doc) => setValue(doc ? JSON.stringify(doc) : "")}
-        />
-      ) : field.kind === "heading" ? (
-        <Textarea
-          id={textKey}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          rows={Math.max(2, value.split("\n").length)}
-          maxLength={300}
-          className="bg-background font-display text-xl"
-        />
-      ) : (
-        <Input
-          id={textKey}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          maxLength={300}
-          className="h-11 bg-background"
-        />
-      )}
+      <RichEditor
+        key={editorKey}
+        id={textKey}
+        initial={parseRich(current)}
+        variant={
+          field.kind === "rich" ? "paragraphs" : field.kind === "heading" ? "heading" : "line"
+        }
+        onChange={(doc) => setValue(doc ? JSON.stringify(doc) : "")}
+      />
       <ErrorLine error={save.error ?? reset.error} />
       <div className="flex flex-wrap gap-2">
         <Button
@@ -1032,17 +988,16 @@ function TextField({ textKey, saved }: { textKey: TextKey; saved: string | undef
 
 export function FaqsAdmin() {
   const content = useAdminContent();
-  const reorder = useEdit(saveOrder);
+  const reorder = useReorder("faqs");
   const [adding, setAdding] = useState(false);
   if (content.isPending) return <Loading />;
   if (content.isError) return <ErrorLine error={content.error} />;
   const { faqs } = content.data;
-  const ids = faqs.map((f) => f.id);
   return (
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Questions show in this order on the home page and the FAQ page.
+          Drag ⠿ to reorder. Questions show in this order on the home page and the FAQ page.
         </p>
         {!adding && (
           <Button onClick={() => setAdding(true)} className="rounded-full">
@@ -1052,33 +1007,26 @@ export function FaqsAdmin() {
       </div>
       {adding && <FaqForm onDone={() => setAdding(false)} />}
       <ErrorLine error={reorder.error} />
-      {faqs.map((faq, index) => (
-        <FaqForm
-          key={`${faq.id}-${faq.question}-${faq.answer}`}
-          faq={faq}
-          index={index}
-          count={faqs.length}
-          moving={reorder.isPending}
-          onMove={(d) => reorder.mutate({ data: { list: "faqs", ids: moved(ids, index, d) } })}
-        />
-      ))}
+      <SortableList
+        items={faqs}
+        label={(faq) => faq.question}
+        onReorder={(ids) => reorder.mutate(ids)}
+      >
+        {(faq, handle) => (
+          <FaqForm key={`${faq.id}-${faq.question}-${faq.answer}`} faq={faq} handle={handle} />
+        )}
+      </SortableList>
     </div>
   );
 }
 
 function FaqForm({
   faq,
-  index = 0,
-  count = 0,
-  moving = false,
-  onMove,
+  handle,
   onDone,
 }: {
   faq?: AdminContent["faqs"][number];
-  index?: number;
-  count?: number;
-  moving?: boolean;
-  onMove?: (direction: -1 | 1) => void;
+  handle?: DragHandle;
   onDone?: () => void;
 }) {
   const [question, setQuestion] = useState(faq?.question ?? "");
@@ -1096,6 +1044,7 @@ function FaqForm({
   return (
     <form onSubmit={submit} className="grid gap-3 rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start gap-2">
+        {handle}
         <Input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
@@ -1106,9 +1055,8 @@ function FaqForm({
           aria-label="Question"
           className="h-11 grow bg-background font-medium"
         />
-        {faq && onMove && (
+        {faq && (
           <>
-            <MoveButtons index={index} count={count} onMove={onMove} disabled={moving} />
             <Button
               type="button"
               variant="ghost"

@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RichT } from "@/components/rich-text";
-import { T } from '@/lib/site-content';
+import { RichT, T } from "@/components/rich-text";
 import { pageHead } from "@/lib/site-data";
 import { GallerySection, ProjectCTA } from "@/components/site-sections";
 export const Route = createFileRoute("/gallery")({
@@ -27,7 +26,10 @@ function GalleryPage() {
         <h1 className="page-title">
           <T k="galleryPage.title" />
         </h1>
-        <RichT k="galleryPage.intro" className="mt-5 max-w-lg text-sm leading-7 text-muted-foreground" />
+        <RichT
+          k="galleryPage.intro"
+          className="mt-5 max-w-lg text-sm leading-7 text-muted-foreground"
+        />
       </div>
       <GallerySection full initialType={type} />
       <ProjectCTA />

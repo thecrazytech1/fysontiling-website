@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { RichT } from "@/components/rich-text";
+import { RichT, T } from "@/components/rich-text";
 import { ArrowUpRight, MapPin, ArrowRight, Phone, Newspaper, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { useState } from "react";
 import { services, contact, press, aboutPhoto } from "@/lib/site-data";
-import { T, useSiteContent } from "@/lib/site-content";
+import { useSiteContent } from "@/lib/site-content";
 
 const serviceTextKeys = ["services.1.text", "services.2.text", "services.3.text"] as const;
 

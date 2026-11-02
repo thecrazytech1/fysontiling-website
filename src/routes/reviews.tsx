@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { RichT } from "@/components/rich-text";
-import { T } from '@/lib/site-content';
+import { RichT, T } from "@/components/rich-text";
 import { ArrowUpRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReviewForm } from '@/components/review-form';

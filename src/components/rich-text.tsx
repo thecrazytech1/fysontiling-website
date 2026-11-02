@@ -8,7 +8,7 @@ import {
   type RichInline,
 } from "@/lib/rich-text";
 import { useText } from "@/lib/site-content";
-import type { RichKey } from "@/lib/site-text";
+import type { PlainKey, RichKey } from "@/lib/site-text";
 
 // Renders validated rich text as React elements (never raw HTML).
 function Inline({ items = [] }: { items?: RichInline[] | undefined }) {
@@ -76,4 +76,23 @@ export function RichText({ doc, className }: { doc: RichDoc; className?: string 
 // Formatted page text Shaun edits in /admin. Renders a <div>, so use it in place of a <p>.
 export function RichT({ k, className }: { k: RichKey; className?: string | undefined }) {
   return <RichText doc={parseRich(useText()(k))} className={className} />;
+}
+
+// Headings, small headings and taglines: the same formatting, but rendered inline inside the
+// page's own element (an <h1>, a <span>…), with each new line as a line break.
+export function InlineRich({ doc }: { doc: RichDoc }) {
+  return (
+    <>
+      {doc.content.map((block, i) => (
+        <Fragment key={i}>
+          {i > 0 && <br />}
+          {block.type === "paragraph" && <Inline items={block.content} />}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+export function T({ k }: { k: PlainKey }) {
+  return <InlineRich doc={parseRich(useText()(k))} />;
 }

@@ -21,10 +21,13 @@ import { cn } from "@/lib/utils";
 import { cleanDoc, isSafeHref, type RichDoc } from "@/lib/rich-text";
 
 // Only the formats the site renders: paragraphs, line breaks (Shift+Enter), bold,
-// italic, links and lists. Headings, quotes, code and so on are switched off, and
-// pasted content is reduced to these formats.
-const extensions = [
+// italic, links and — except in headings and other one-line text — lists. Headings,
+// quotes, code and so on are switched off, and pasted content is reduced to these formats.
+const makeExtensions = (inline: boolean) => [
   StarterKit.configure({
+    ...(inline
+      ? { bulletList: false, orderedList: false, listItem: false, listKeymap: false }
+      : {}),
     heading: false,
     blockquote: false,
     code: false,
@@ -40,6 +43,8 @@ const extensions = [
     },
   }),
 ];
+const blockExtensions = makeExtensions(false);
+const inlineExtensions = makeExtensions(true);
 
 function ToolbarButton({
   label,
@@ -92,7 +97,7 @@ function editLink(editor: Editor) {
   editor.chain().focus().extendMarkRange("link").setLink({ href: withProtocol }).run();
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor, inline }: { editor: Editor; inline: boolean }) {
   const state = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
@@ -124,21 +129,25 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolbarButton label="Link" active={state.link} onClick={() => editLink(editor)}>
         <Link2 />
       </ToolbarButton>
-      <span className="mx-1 h-5 w-px bg-border" />
-      <ToolbarButton
-        label="Bullet list"
-        active={state.bulletList}
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-      >
-        <List />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Numbered list"
-        active={state.orderedList}
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-      >
-        <ListOrdered />
-      </ToolbarButton>
+      {!inline && (
+        <>
+          <span className="mx-1 h-5 w-px bg-border" />
+          <ToolbarButton
+            label="Bullet list"
+            active={state.bulletList}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+          >
+            <List />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Numbered list"
+            active={state.orderedList}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          >
+            <ListOrdered />
+          </ToolbarButton>
+        </>
+      )}
       <span className="mx-1 h-5 w-px bg-border" />
       <ToolbarButton
         label="Clear formatting"
@@ -166,7 +175,7 @@ function Toolbar({ editor }: { editor: Editor }) {
 
 // Content styles mirror how the site shows rich text (see components/rich-text.tsx).
 const contentClass = cn(
-  "min-h-24 px-3 py-2 text-sm leading-7 focus:outline-none",
+  "px-3 py-2 text-sm leading-7 focus:outline-none",
   "[&>*+*]:mt-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li+li]:mt-1",
   "[&_strong]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4",
 );
@@ -175,24 +184,38 @@ export function RichEditor({
   initial,
   onChange,
   id,
+  variant = "paragraphs",
 }: {
   initial: RichDoc;
   onChange: (doc: RichDoc | null) => void;
   id?: string;
+  // "heading" and "line" have no lists; Enter starts a new line on the page.
+  variant?: "paragraphs" | "heading" | "line";
 }) {
+  const inline = variant !== "paragraphs";
+  const className = cn(
+    contentClass,
+    variant === "paragraphs" && "min-h-24",
+    variant === "heading" && "font-display text-xl leading-tight [&>*+*]:mt-0",
+    variant === "line" && "[&>*+*]:mt-0",
+  );
   const editor = useEditor({
-    extensions,
+    extensions: inline ? inlineExtensions : blockExtensions,
     // RichDoc is a strict subset of the editor's JSON (optional fields differ only in typing).
     content: initial as JSONContent,
     immediatelyRender: false,
     editorProps: {
-      attributes: { class: contentClass, ...(id ? { id } : {}), "aria-multiline": "true" },
+      attributes: { class: className, ...(id ? { id } : {}), "aria-multiline": "true" },
     },
     onUpdate: ({ editor: e }) => onChange(cleanDoc(e.getJSON())),
   });
   return (
     <div className="rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
-      {editor ? <Toolbar editor={editor} /> : <div className="h-10 border-b border-border" />}
+      {editor ? (
+        <Toolbar editor={editor} inline={inline} />
+      ) : (
+        <div className="h-10 border-b border-border" />
+      )}
       <EditorContent editor={editor} />
     </div>
   );

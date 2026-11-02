@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { T } from '@/lib/site-content';
+import { T } from "@/components/rich-text";
 import { Link } from '@tanstack/react-router';
 import { ArrowUpRight, ArrowDown, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';

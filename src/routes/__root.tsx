@@ -12,10 +12,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SiteHeader, SiteFooter } from '@/components/site-shell';
-import { localBusinessJsonLd, siteOrigin } from '@/lib/site-data';
-import { getSiteContent } from '@/lib/content.functions';
-import { Button } from '@/components/ui/button';
+import { SiteHeader, SiteFooter } from "@/components/site-shell";
+import { localBusinessJsonLd, siteOrigin } from "@/lib/site-data";
+import { getSiteContent } from "@/lib/content.functions";
+import { Button } from "@/components/ui/button";
 
 function NotFoundComponent() {
   return (
@@ -87,10 +87,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Fyson Tiling — Mornington Peninsula Tiler" },
-      { name: "description", content: "Residential wall and floor tiling on the Mornington Peninsula with Shaun Fyson — bathrooms, kitchens, splashbacks, walls and floors." },
+      {
+        name: "description",
+        content:
+          "Residential wall and floor tiling on the Mornington Peninsula with Shaun Fyson — bathrooms, kitchens, splashbacks, walls and floors.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Fyson Tiling" },
       { property: "og:locale", content: "en_AU" },
+      { property: "og:title", content: "Fyson Tiling - Mornington Peninsula Tiler" },
+      {
+        property: "og:description",
+        content:
+          "Residential wall and floor tiling on the Mornington Peninsula with Shaun Fyson — bathrooms, kitchens, splashbacks, walls and floors.",
+      },
+      { property: "og:url", content: siteOrigin },
+      { property: "og:image", content: "https://www.fysontiling.com.au/favicon.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "675" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     scripts: [
@@ -107,9 +121,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
     links: [
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap' },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -143,7 +160,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SiteHeader />
-      <main><Outlet /></main>
+      <main>
+        <Outlet />
+      </main>
       <SiteFooter />
     </QueryClientProvider>
   );

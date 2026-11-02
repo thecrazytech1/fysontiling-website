@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { Editor } from "@tiptap/react";
 import { cleanDoc, parseRich, plainToDoc, richDocSchema, richToPlain } from "@/lib/rich-text";
-import { RichText } from "@/components/rich-text";
+import { InlineRich, RichText } from "@/components/rich-text";
 import StarterKit from "@tiptap/starter-kit";
 
 describe("Rich page text", () => {
@@ -86,5 +86,56 @@ describe("Rich page text", () => {
     expect(container.querySelectorAll("a")).toHaveLength(1);
     expect(container.querySelector("ul li")?.textContent).toBe("one");
     expect(container.querySelector("script, h1, [style]")).toBeNull();
+  });
+
+  it("renders headings inline: line breaks kept, formatting allowed, no paragraphs", () => {
+    const heading = parseRich("LET’S MAKE\nIT HAPPEN.");
+    const { container } = render(
+      <h1>
+        <InlineRich doc={heading} />
+      </h1>,
+    );
+    expect(container.querySelector("h1")?.innerHTML).toBe("LET’S MAKE<br>IT HAPPEN.");
+    const formatted = richDocSchema.parse({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "FYSON ", marks: [{ type: "bold" }] },
+            { type: "text", text: "TILING." },
+          ],
+        },
+        { type: "paragraph", content: [{ type: "text", text: "Second line" }] },
+      ],
+    });
+    const second = render(
+      <h2>
+        <InlineRich doc={formatted} />
+      </h2>,
+    ).container.querySelector("h2");
+    expect(second?.innerHTML).toBe(
+      '<strong class="font-semibold text-foreground">FYSON </strong>TILING.<br>Second line',
+    );
+    expect(second?.querySelector("p")).toBeNull();
+  });
+
+  it("keeps lists out of the heading editor, even when pasted", () => {
+    const editor = new Editor({
+      extensions: [
+        StarterKit.configure({
+          bulletList: false,
+          orderedList: false,
+          listItem: false,
+          listKeymap: false,
+          heading: false,
+        }),
+      ],
+      content: "<ul><li><p>one</p></li><li><p>two</p></li></ul>",
+    });
+    const doc = cleanDoc(editor.getJSON());
+    editor.destroy();
+    expect(doc?.content.every((block) => block.type === "paragraph")).toBe(true);
+    expect(richToPlain(doc!)).toContain("one");
   });
 });

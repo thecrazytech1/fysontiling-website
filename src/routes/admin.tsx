@@ -34,7 +34,7 @@ import {
 export const Route = createFileRoute("/admin")({
   staticData: { sitemap: false },
   head: () => ({
-    meta: [{ title: "Admin — Fyson Tiling" }, { name: "robots", content: "noindex, nofollow" }],
+    meta: [{ title: "Admin - Fyson Tiling" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: AdminPage,
 });

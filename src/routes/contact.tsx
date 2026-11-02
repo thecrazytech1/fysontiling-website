@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RichT } from "@/components/rich-text";
-import { T } from '@/lib/site-content';
+import { RichT, T } from "@/components/rich-text";
 import { MapPin, ArrowUpRight, Phone } from "lucide-react";
 import { pageHead, contact } from "@/lib/site-data";
 import { Button } from "@/components/ui/button";

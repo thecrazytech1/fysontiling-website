@@ -1,8 +1,6 @@
-import { Fragment } from "react";
-import { createElement, type ReactNode } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { bundledAssetUrl } from "@/lib/site-data";
-import { textDefaults, type PlainKey, type TextKey } from "@/lib/site-text";
+import { textDefaults, type TextKey } from "@/lib/site-text";
 
 // Rows as stored in the site_* tables (see drizzle/schema.ts).
 export type ProjectRow = {
@@ -121,7 +119,7 @@ export function assembleContent(rows: ContentRows, storageBase: string): SiteCon
         !photo.magazine_page &&
         (photo.project_id === null || publishedIds.has(photo.project_id)),
     )
-    .sort((a, b) => a.gallery_order - b.gallery_order)
+    .sort((a, b) => a.gallery_order - b.gallery_order || a.id.localeCompare(b.id))
     .map((photo): GalleryItem => ({
       image: url(photo),
       title: photo.caption,
@@ -151,17 +149,4 @@ export const useSiteContent = (): SiteContent => rootRoute.useLoaderData();
 export function useText() {
   const { text } = useSiteContent();
   return (key: TextKey) => text[key] ?? textDefaults[key].value;
-}
-
-// Page text with line breaks kept, so a heading Shaun writes on two lines shows on two.
-export function T({ k }: { k: PlainKey }) {
-  const value = useText()(k);
-  const lines = value.split("\n");
-  return createElement(
-    Fragment,
-    null,
-    ...lines.flatMap((line, i): ReactNode[] =>
-      i === 0 ? [line] : [createElement("br", { key: i }), line],
-    ),
-  );
 }

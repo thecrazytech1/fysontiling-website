@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RichT } from "@/components/rich-text";
-import { T } from '@/lib/site-content';
+import { RichT, T } from "@/components/rich-text";
 import { pageHead } from '@/lib/site-data';
 import { PressSection, ProjectCTA } from '@/components/site-sections';
 export const Route = createFileRoute("/media")({

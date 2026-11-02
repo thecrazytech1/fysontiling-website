@@ -169,6 +169,11 @@
 - [ ] Apply migrations 0004 and 0005 on the server
 
 ## Rich text editor for page text (Nov 2)
-- [x] Paragraph text in Admin → Page text now uses a formatting editor (bold, italic, links, bullet and numbered lists, undo/redo); headings stay plain to protect the design
+- [x] Every field in Admin → Page text uses the same formatting editor (bold, italic, links, undo/redo); paragraphs also get bullet and numbered lists, headings and short lines render inline with Enter as a line break
 - [x] Formatting is stored as validated JSON and rendered from an allow-list — pasted styles, scripts and unsafe links are stripped; the editor only loads on /admin
 - [ ] Possible next: the same editor for project descriptions and FAQ answers
+
+## Drag-and-drop reordering (Nov 2)
+- [x] Projects, project photos, gallery photos, gallery categories and FAQs are reordered by dragging the ⠿ handle (mouse, touch or keyboard) instead of arrow buttons
+- [x] Fixed reorder glitches: the list now updates instantly, saves run in order, the server only writes rows that moved, and newly categorised photos no longer tie with others in the gallery
+- [x] Requests abandoned by the browser are no longer logged as server errors

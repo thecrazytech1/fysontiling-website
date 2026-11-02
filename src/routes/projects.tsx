@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { RichT } from "@/components/rich-text";
+import { RichT, T } from "@/components/rich-text";
 import { ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProjectCTA } from '@/components/site-sections';
 import { pageHead } from '@/lib/site-data';
-import { T, useSiteContent } from '@/lib/site-content';
+import { useSiteContent } from '@/lib/site-content';
 
 export const Route = createFileRoute('/projects')({
   staticData: { sitemap: true },

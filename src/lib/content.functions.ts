@@ -158,7 +158,9 @@ export const setProjectCover = createServerFn({ method: "POST" })
 
 const orderLists = ["projects", "project-photos", "gallery", "faqs", "categories"] as const;
 
-// Saves a new order after Shaun moves something up or down: ids are in display order.
+// Saves a new order after Shaun drags something: ids are the whole list in display order.
+// Only rows whose position actually changed are written (usually a handful), which also
+// tidies up any ties left by earlier edits.
 export const saveOrder = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((data: unknown) =>
@@ -166,21 +168,41 @@ export const saveOrder = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const supabase = await db();
+    const update = (rowId: string, position: number) => {
+      if (data.list === "projects")
+        return supabase.from("site_projects").update({ sort_order: position }).eq("id", rowId);
+      if (data.list === "faqs")
+        return supabase.from("site_faqs").update({ sort_order: position }).eq("id", rowId);
+      if (data.list === "categories")
+        return supabase
+          .from("site_gallery_categories")
+          .update({ sort_order: position })
+          .eq("id", rowId);
+      if (data.list === "gallery")
+        return supabase.from("site_photos").update({ gallery_order: position }).eq("id", rowId);
+      return supabase.from("site_photos").update({ sort_order: position }).eq("id", rowId);
+    };
+    const current = new Map<string, number>();
+    if (data.list === "gallery") {
+      const rows = check(
+        await supabase.from("site_photos").select("id, gallery_order").in("id", data.ids),
+      );
+      for (const row of rows ?? []) current.set(row.id, row.gallery_order);
+    } else {
+      const table =
+        data.list === "projects"
+          ? "site_projects"
+          : data.list === "faqs"
+            ? "site_faqs"
+            : data.list === "categories"
+              ? "site_gallery_categories"
+              : "site_photos";
+      const rows = check(await supabase.from(table).select("id, sort_order").in("id", data.ids));
+      for (const row of rows ?? []) current.set(row.id, row.sort_order);
+    }
+    const changes = data.ids.filter((rowId, position) => current.get(rowId) !== position);
     const results = await Promise.all(
-      data.ids.map((rowId, index) => {
-        if (data.list === "projects")
-          return supabase.from("site_projects").update({ sort_order: index }).eq("id", rowId);
-        if (data.list === "faqs")
-          return supabase.from("site_faqs").update({ sort_order: index }).eq("id", rowId);
-        if (data.list === "categories")
-          return supabase
-            .from("site_gallery_categories")
-            .update({ sort_order: index })
-            .eq("id", rowId);
-        if (data.list === "gallery")
-          return supabase.from("site_photos").update({ gallery_order: index }).eq("id", rowId);
-        return supabase.from("site_photos").update({ sort_order: index }).eq("id", rowId);
-      }),
+      changes.map((rowId) => update(rowId, data.ids.indexOf(rowId))),
     );
     results.forEach((result) => check(result));
     return changed({ success: true });
@@ -212,15 +234,29 @@ export const updatePhoto = createServerFn({ method: "POST" })
           .eq("category", data.category ?? "")
           .neq("id", data.id),
       );
+    const category = data.magazinePage ? null : data.category;
+    // A photo joining the gallery goes to the front, where Shaun will see it, rather than
+    // keeping a stale position that ties with another photo.
+    const before = check(
+      await supabase.from("site_photos").select("category").eq("id", data.id).maybeSingle(),
+    );
+    let galleryOrder: number | undefined;
+    if (category !== null && before?.category === null) {
+      const first = check(
+        await supabase.from("site_photos").select("gallery_order").order("gallery_order").limit(1),
+      );
+      galleryOrder = (first?.[0]?.gallery_order ?? 0) - 1;
+    }
     check(
       await supabase
         .from("site_photos")
         .update({
           caption: data.caption,
-          category: data.magazinePage ? null : data.category,
+          category,
           magazine_page: data.magazinePage,
           category_cover: categoryCover,
           focus: data.focus,
+          ...(galleryOrder === undefined ? {} : { gallery_order: galleryOrder }),
         })
         .eq("id", data.id),
     );
@@ -439,17 +475,13 @@ export const saveText = createServerFn({ method: "POST" })
     z
       .object({ key: textKey, value: z.string().trim().min(1).max(50_000) })
       .transform(({ key, value }, ctx) => {
-        if (!isRichKey(key)) {
-          if (value.length > 3000)
-            ctx.addIssue({ code: "custom", message: "That text is too long." });
-          return { key, value };
-        }
-        // Formatted text is re-validated here: only allowed formats and safe links are stored.
+        // Text arrives as the editor's JSON and is re-validated here: only allowed
+        // formats and safe links are stored.
         let json: unknown;
         try {
           json = JSON.parse(value);
         } catch {
-          ctx.addIssue({ code: "custom", message: "The formatted text couldn't be read." });
+          ctx.addIssue({ code: "custom", message: "The text couldn't be read." });
           return z.NEVER;
         }
         const doc = richDocSchema.safeParse(json);
@@ -460,6 +492,9 @@ export const saveText = createServerFn({ method: "POST" })
           });
           return z.NEVER;
         }
+        // Headings and short lines sit inside a single element on the page: no lists.
+        if (!isRichKey(key) && doc.data.content.some((block) => block.type !== "paragraph"))
+          ctx.addIssue({ code: "custom", message: "Lists can only be used in paragraphs." });
         if (!richToPlain(doc.data).trim())
           ctx.addIssue({ code: "custom", message: "The text can't be empty." });
         return { key, value: JSON.stringify(doc.data) };

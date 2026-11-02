@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { T } from '@/lib/site-content';
+import { T } from "@/components/rich-text";
 import { pageHead } from '@/lib/site-data';
 import { AreasSection, LocalAreasCopy, ProjectCTA } from '@/components/site-sections';
 import { ServiceMapSection } from '@/components/service-map';

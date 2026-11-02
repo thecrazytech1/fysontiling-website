@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RichT } from "@/components/rich-text";
+import { RichT, T } from "@/components/rich-text";
 import { ClientOnly, Link } from '@tanstack/react-router';
 import { ArrowUpRight, MapPin, Search } from 'lucide-react';
 import { suburbs } from '@/lib/site-data';
-import { T } from '@/lib/site-content';
 import { Button } from '@/components/ui/button';
 
 type LeafletMap = import('leaflet').Map;
