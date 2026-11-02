@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin.functions";
 import { photoBucket } from "@/lib/site-content";
-import { isTextKey } from "@/lib/site-text";
+import { isRichKey, isTextKey } from "@/lib/site-text";
+import { richDocSchema, richToPlain } from "@/lib/rich-text";
 
 // Public: the content every page renders (cached on the server, see content.server.ts).
 export const getSiteContent = createServerFn({ method: "GET" }).handler(async () => {
@@ -435,7 +436,35 @@ const textKey = z.string().refine(isTextKey, "Unknown page text.");
 export const saveText = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((data: unknown) =>
-    z.object({ key: textKey, value: z.string().trim().min(1).max(3000) }).parse(data),
+    z
+      .object({ key: textKey, value: z.string().trim().min(1).max(50_000) })
+      .transform(({ key, value }, ctx) => {
+        if (!isRichKey(key)) {
+          if (value.length > 3000)
+            ctx.addIssue({ code: "custom", message: "That text is too long." });
+          return { key, value };
+        }
+        // Formatted text is re-validated here: only allowed formats and safe links are stored.
+        let json: unknown;
+        try {
+          json = JSON.parse(value);
+        } catch {
+          ctx.addIssue({ code: "custom", message: "The formatted text couldn't be read." });
+          return z.NEVER;
+        }
+        const doc = richDocSchema.safeParse(json);
+        if (!doc.success) {
+          ctx.addIssue({
+            code: "custom",
+            message: doc.error.issues[0]?.message ?? "Unsupported formatting.",
+          });
+          return z.NEVER;
+        }
+        if (!richToPlain(doc.data).trim())
+          ctx.addIssue({ code: "custom", message: "The text can't be empty." });
+        return { key, value: JSON.stringify(doc.data) };
+      })
+      .parse(data),
   )
   .handler(async ({ data }) => {
     check(

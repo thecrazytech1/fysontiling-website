@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { RichT } from "@/components/rich-text";
 import { T } from '@/lib/site-content';
 import { MapPin, ArrowUpRight, Phone } from "lucide-react";
 import { pageHead, contact } from "@/lib/site-data";
@@ -27,18 +28,14 @@ function ContactPage() {
                 <h1 className="page-title">
                     <T k="contact.title" />
                 </h1>
-                <p className="mt-6 max-w-sm text-sm leading-8 text-muted-foreground">
-                    <T k="contact.intro" />
-                </p>
+                <RichT k="contact.intro" className="mt-6 max-w-sm text-sm leading-8 text-muted-foreground" />
                 <Button asChild className="mt-8 h-14 w-full rounded-full px-7 text-base sm:w-auto">
                     <a href={contact.phoneTel}>
                         <Phone size={19} />
                         {contact.phoneDisplay}
                     </a>
                 </Button>
-                <p className="mt-3 text-xs leading-6 text-muted-foreground">
-                    <T k="contact.callNote" />
-                </p>
+                <RichT k="contact.callNote" className="mt-3 text-xs leading-6 text-muted-foreground" />
                 <p className="mt-8 flex items-center gap-2 text-sm">
                     <MapPin size={17} className="text-primary" />
                     Mornington Peninsula, Victoria

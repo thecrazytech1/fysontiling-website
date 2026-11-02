@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { RichT } from "@/components/rich-text";
 import { ClientOnly, Link } from '@tanstack/react-router';
 import { ArrowUpRight, MapPin, Search } from 'lucide-react';
 import { suburbs } from '@/lib/site-data';
@@ -86,7 +87,7 @@ export function ServiceMapSection() {
       <div className="site-width">
         <p className="eyebrow mb-3 text-primary"><T k="map.eyebrow" /></p>
         <h2 className="section-title mb-4"><T k="map.title" /></h2>
-        <p className="mb-8 max-w-xl text-sm leading-7 text-muted-foreground"><T k="map.intro" /></p>
+        <RichT k="map.intro" className="mb-8 max-w-xl text-sm leading-7 text-muted-foreground" />
         <div className="grid gap-8 md:grid-cols-[1fr_1.4fr]">
           <div>
             <label className="relative block">

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { RichT } from "@/components/rich-text";
 import { T } from '@/lib/site-content';
 import { pageHead } from "@/lib/site-data";
 import { GallerySection, ProjectCTA } from "@/components/site-sections";
@@ -26,9 +27,7 @@ function GalleryPage() {
         <h1 className="page-title">
           <T k="galleryPage.title" />
         </h1>
-        <p className="mt-5 max-w-lg text-sm leading-7 text-muted-foreground">
-          <T k="galleryPage.intro" />
-        </p>
+        <RichT k="galleryPage.intro" className="mt-5 max-w-lg text-sm leading-7 text-muted-foreground" />
       </div>
       <GallerySection full initialType={type} />
       <ProjectCTA />

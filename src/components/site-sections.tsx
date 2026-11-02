@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { RichT } from "@/components/rich-text";
 import { ArrowUpRight, MapPin, ArrowRight, Phone, Newspaper, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -10,10 +11,11 @@ import {
 } from "@/components/ui/accordion";
 import { useState } from "react";
 import { services, contact, press, aboutPhoto } from "@/lib/site-data";
-import { T, useSiteContent, useText } from "@/lib/site-content";
+import { T, useSiteContent } from "@/lib/site-content";
+
+const serviceTextKeys = ["services.1.text", "services.2.text", "services.3.text"] as const;
 
 export function ServicesSection() {
-  const t = useText();
   return (
     <section className="py-16 md:py-24">
       <div className="site-width">
@@ -26,9 +28,7 @@ export function ServicesSection() {
               <T k="services.title" />
             </h2>
           </div>
-          <p className="max-w-sm text-sm leading-7 text-muted-foreground">
-            <T k="services.intro" />
-          </p>
+          <RichT k="services.intro" className="max-w-sm text-sm leading-7 text-muted-foreground" />
         </div>
         <div className="grid gap-7 md:grid-cols-3">
           {services.map((s, i) => (
@@ -45,9 +45,10 @@ export function ServicesSection() {
                 <h3 className="text-lg font-medium">{s.title}</h3>
                 <span className="eyebrow text-primary">{s.number}</span>
               </div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {t(`services.${i + 1}.text` as "services.1.text")}
-              </p>
+              <RichT
+                k={serviceTextKeys[i] ?? "services.1.text"}
+                className="mt-3 text-sm leading-7 text-muted-foreground"
+              />
               <Button asChild variant="link" className="mt-2 px-0">
                 <Link to="/contact">
                   Talk about your project <ArrowUpRight />
@@ -104,9 +105,7 @@ export function GallerySection({
               <T k="gallery.title" />
             </h2>
           </div>
-          <p className="max-w-sm text-sm leading-7 text-muted-foreground">
-            <T k="gallery.intro" />
-          </p>
+          <RichT k="gallery.intro" className="max-w-sm text-sm leading-7 text-muted-foreground" />
         </div>
         {full && (
           <div className="mb-8 flex flex-wrap gap-2">
@@ -215,9 +214,7 @@ export function ProjectsSection({ limit }: { limit?: number | undefined }) {
               <T k="projects.title" />
             </h2>
           </div>
-          <p className="max-w-sm text-sm leading-7 text-muted-foreground">
-            <T k="projects.intro" />
-          </p>
+          <RichT k="projects.intro" className="max-w-sm text-sm leading-7 text-muted-foreground" />
         </div>
         <div className="grid gap-7 md:grid-cols-3">
           {visibleProjects.map((project) => (
@@ -282,12 +279,8 @@ export function AboutSection() {
           <h2 className="section-title">
             <T k="about.title" />
           </h2>
-          <p className="mt-6 text-sm leading-8 text-muted-foreground">
-            <T k="about.p1" />
-          </p>
-          <p className="mt-4 text-sm leading-8 text-muted-foreground">
-            <T k="about.p2" />
-          </p>
+          <RichT k="about.p1" className="mt-6 text-sm leading-8 text-muted-foreground" />
+          <RichT k="about.p2" className="mt-4 text-sm leading-8 text-muted-foreground" />
           <Button asChild className="mt-8 h-12 rounded-full">
             <Link to="/contact">
               Meet your next project <ArrowUpRight />
@@ -315,9 +308,7 @@ export function AreasSection() {
             <MapPin size={18} className="text-primary" />
             Mornington Peninsula, Victoria
           </p>
-          <p className="mt-4 text-sm leading-7 text-muted-foreground">
-            <T k="areas.text" />
-          </p>
+          <RichT k="areas.text" className="mt-4 text-sm leading-7 text-muted-foreground" />
           <Button asChild variant="link" className="mt-3 px-0">
             <Link to="/contact">
               Ask about your area <ArrowRight />
@@ -341,15 +332,9 @@ export function LocalAreasCopy() {
           </h2>
         </div>
         <div className="space-y-5 text-sm leading-7 text-muted-foreground">
-          <p>
-            <T k="localAreas.p1" />
-          </p>
-          <p>
-            <T k="localAreas.p2" />
-          </p>
-          <p>
-            <T k="localAreas.p3" />
-          </p>
+          <RichT k="localAreas.p1" />
+          <RichT k="localAreas.p2" />
+          <RichT k="localAreas.p3" />
           <Button asChild variant="link" className="px-0">
             <Link to="/contact">
               Enquire about your suburb <ArrowRight />
@@ -398,9 +383,7 @@ export function ReviewsSection() {
           <h2 className="font-display text-3xl">
             <T k="community.title" />
           </h2>
-          <p className="mt-3 text-sm text-muted-foreground">
-            <T k="community.text" />
-          </p>
+          <RichT k="community.text" className="mt-3 text-sm text-muted-foreground" />
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="outline" className="h-12 rounded-full">

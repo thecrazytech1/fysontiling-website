@@ -30,6 +30,8 @@ import {
   uploadPhoto,
 } from "@/lib/content.functions";
 import { textDefaults, type TextKey } from "@/lib/site-text";
+import { cleanDoc, parseRich, richToPlain } from "@/lib/rich-text";
+import { RichEditor } from "@/components/rich-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -907,7 +909,9 @@ export function TextAdmin() {
   const keys = (Object.keys(textDefaults) as TextKey[]).filter((key) => {
     if (!query) return true;
     const field = textDefaults[key];
-    return [field.group, field.label, field.value, saved.get(key) ?? ""].some((s) =>
+    // Saved rich text is JSON; search its words, not the markup.
+    const savedText = richToPlain(parseRich(saved.get(key) ?? ""));
+    return [field.group, field.label, field.value, savedText].some((s) =>
       s.toLowerCase().includes(query),
     );
   });
@@ -916,8 +920,9 @@ export function TextAdmin() {
     <div className="grid gap-8">
       <div className="grid gap-2">
         <p className="text-sm text-muted-foreground">
-          Edit the wording on each page. In headings, press Enter to start a new line. “Back to
-          original” restores the wording the site launched with.
+          Edit the wording on each page. Paragraphs have a toolbar for bold, italic, links and lists
+          (Shift+Enter for a line break without a new paragraph). In headings, press Enter to start
+          a new line. “Back to original” restores the wording the site launched with.
         </p>
         <Input
           type="search"
@@ -948,34 +953,60 @@ export function TextAdmin() {
 function TextField({ textKey, saved }: { textKey: TextKey; saved: string | undefined }) {
   const field = textDefaults[textKey];
   const current = saved ?? field.value;
-  const [value, setValue] = useState(current);
   const save = useEdit(saveText);
   const reset = useEdit(resetText);
+  const rich = field.kind === "rich";
+  // Rich fields are edited as a document and saved as its JSON; others as plain text.
+  const currentValue = rich ? JSON.stringify(cleanDoc(parseRich(current))) : current;
+  const [value, setValue] = useState(currentValue);
+  const [editorKey, setEditorKey] = useState(0);
+  const empty = rich ? richToPlain(parseRich(value)).trim() === "" : value.trim() === "";
+  const undo = () => {
+    setValue(currentValue);
+    setEditorKey((k) => k + 1);
+  };
   return (
     <div className="grid gap-2 rounded-2xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-center gap-2">
         <Label htmlFor={textKey}>{field.label}</Label>
         {saved !== undefined && <Badge variant="outline">Edited</Badge>}
       </div>
-      <Textarea
-        id={textKey}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        rows={Math.min(8, Math.max(field.heading ? 2 : 2, Math.ceil(value.length / 90)))}
-        maxLength={3000}
-        className={`bg-background ${field.heading ? "font-display text-xl" : ""}`}
-      />
+      {rich ? (
+        <RichEditor
+          key={editorKey}
+          id={textKey}
+          initial={parseRich(current)}
+          onChange={(doc) => setValue(doc ? JSON.stringify(doc) : "")}
+        />
+      ) : field.kind === "heading" ? (
+        <Textarea
+          id={textKey}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          rows={Math.max(2, value.split("\n").length)}
+          maxLength={300}
+          className="bg-background font-display text-xl"
+        />
+      ) : (
+        <Input
+          id={textKey}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          maxLength={300}
+          className="h-11 bg-background"
+        />
+      )}
       <ErrorLine error={save.error ?? reset.error} />
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
-          disabled={value.trim() === "" || value === current || save.isPending}
+          disabled={empty || value === currentValue || save.isPending}
           onClick={() => save.mutate({ data: { key: textKey, value } })}
         >
           {save.isPending ? <LoaderCircle className="animate-spin" /> : "Save"}
         </Button>
-        {value !== current && (
-          <Button size="sm" variant="ghost" onClick={() => setValue(current)}>
+        {value !== currentValue && (
+          <Button size="sm" variant="ghost" onClick={undo}>
             Undo changes
           </Button>
         )}

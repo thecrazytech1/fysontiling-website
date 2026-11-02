@@ -167,3 +167,8 @@
 ## Gallery categories (Nov 2)
 - [x] Shaun can add, rename, reorder and delete gallery categories from Admin → Gallery; renaming moves the photos with it, and a category with photos can't be deleted
 - [ ] Apply migrations 0004 and 0005 on the server
+
+## Rich text editor for page text (Nov 2)
+- [x] Paragraph text in Admin → Page text now uses a formatting editor (bold, italic, links, bullet and numbered lists, undo/redo); headings stay plain to protect the design
+- [x] Formatting is stored as validated JSON and rendered from an allow-list — pasted styles, scripts and unsafe links are stripped; the editor only loads on /admin
+- [ ] Possible next: the same editor for project descriptions and FAQ answers

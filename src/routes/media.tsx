@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { RichT } from "@/components/rich-text";
 import { T } from '@/lib/site-content';
 import { pageHead } from '@/lib/site-data';
 import { PressSection, ProjectCTA } from '@/components/site-sections';
@@ -8,5 +9,5 @@ export const Route = createFileRoute("/media")({
   component: Media,
 });
 function Media() {
-  return <><section className="border-b border-border py-14 md:py-20"><div className="site-width"><p className="eyebrow mb-3 text-primary"><T k="mediaPage.eyebrow"/></p><h1 className="page-title"><T k="mediaPage.title"/></h1><p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground"><T k="mediaPage.intro"/></p></div></section><PressSection/><ProjectCTA/></>;
+  return <><section className="border-b border-border py-14 md:py-20"><div className="site-width"><p className="eyebrow mb-3 text-primary"><T k="mediaPage.eyebrow"/></p><h1 className="page-title"><T k="mediaPage.title"/></h1><RichT k="mediaPage.intro" className="mt-5 max-w-md text-sm leading-7 text-muted-foreground" /></div></section><PressSection/><ProjectCTA/></>;
 }

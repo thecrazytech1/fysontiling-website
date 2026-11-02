@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { RichT } from "@/components/rich-text";
 import { T } from '@/lib/site-content';
 import { ArrowUpRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ function ReviewsPage() {
     <section className="site-width py-14 md:py-20">
       <p className="eyebrow mb-3 text-primary">From the community</p>
       <h1 className="font-display text-5xl md:text-7xl"><T k="reviewsPage.title"/></h1>
-      <p className="mt-5 max-w-xl text-sm leading-7 text-muted-foreground"><T k="reviewsPage.intro"/></p>
+      <RichT k="reviewsPage.intro" className="mt-5 max-w-xl text-sm leading-7 text-muted-foreground" />
       <Button asChild className="mt-7 h-12 rounded-full px-6"><a href={contact.googleReview} target="_blank" rel="noreferrer">Review us on Google <ArrowUpRight/></a></Button>
     </section>
     {reviews.length > 0 && <section className="site-width grid gap-5 pb-14 md:grid-cols-2 lg:grid-cols-3">
