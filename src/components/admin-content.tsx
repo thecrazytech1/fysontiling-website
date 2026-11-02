@@ -627,7 +627,7 @@ function ProjectEditor({
           <Switch checked={published} onCheckedChange={setPublished} />
           {published
             ? "Shown on the website"
-            : "Hidden from the website — switch on once the photos are in"}
+            : "Hidden from the website - switch on once the photos are in"}
         </label>
         <ErrorLine error={save.error ?? remove.error} />
         <div className="flex flex-wrap gap-3">

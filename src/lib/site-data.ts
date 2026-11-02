@@ -320,7 +320,7 @@ const existingGallery: GalleryItem[] = [
     outdoors9,
   ].map((asset, index) => ({
     image: asset,
-    title: outdoorsTitles[index] ?? `Outdoors — ${index + 1}`,
+    title: outdoorsTitles[index] ?? `Outdoors - ${index + 1}`,
     type: "Outdoors",
     cover: index === 5,
   })),
@@ -389,7 +389,7 @@ export const suburbs: Array<{ name: string; lat: number; lng: number }> = [
   { name: "Tuerong", lat: -38.2987, lng: 145.0967 },
   { name: "Tyabb", lat: -38.259, lng: 145.186 },
 ];
-// Magazine and press features — entries come from Shaun's own covers/clippings; never invent entries.
+// Magazine and press features - entries come from Shaun's own covers/clippings; never invent entries.
 export const press: Array<{
   publication: string;
   title: string;
@@ -695,7 +695,7 @@ export function localBusinessJsonLd() {
     "@id": businessId,
     name: "Fyson Tiling",
     description:
-      "Residential wall and floor tiling on the Mornington Peninsula, Victoria — bathrooms, kitchens, splashbacks, walls, floors and outdoor areas. Owner-operated by Shaun Fyson, with 20 years of tiling experience.",
+      "Residential wall and floor tiling on the Mornington Peninsula, Victoria - bathrooms, kitchens, splashbacks, walls, floors and outdoor areas. Owner-operated by Shaun Fyson, with 20 years of tiling experience.",
     url: siteOrigin,
     logo: absoluteUrl(logoAsset),
     image: [absoluteUrl(hero), absoluteUrl(aboutPhoto)],

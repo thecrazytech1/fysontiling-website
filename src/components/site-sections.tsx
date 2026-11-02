@@ -203,7 +203,7 @@ export function GallerySection({
         )}
         {full && items.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            No projects in this category yet — check back soon.
+            No projects in this category yet - check back soon.
           </p>
         )}
       </div>
@@ -470,7 +470,7 @@ export function PressSection() {
                     <div className="relative mb-5 overflow-hidden rounded-sm">
                       <img
                         src={p.image}
-                        alt={`${p.title} — ${p.publication} cover`}
+                        alt={`${p.title} - ${p.publication} cover`}
                         loading="lazy"
                         className="aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       />
@@ -535,7 +535,7 @@ export function PressSection() {
           {feature && (
             <>
               <DialogTitle>
-                {feature.title} — {feature.publication}
+                {feature.title} - {feature.publication}
               </DialogTitle>
               <DialogDescription>
                 {pageCount > 1

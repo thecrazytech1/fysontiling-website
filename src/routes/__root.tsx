@@ -86,11 +86,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Fyson Tiling — Mornington Peninsula Tiler" },
+      { title: "Fyson Tiling - Mornington Peninsula Tiler" },
       {
         name: "description",
         content:
-          "Residential wall and floor tiling on the Mornington Peninsula with Shaun Fyson — bathrooms, kitchens, splashbacks, walls and floors.",
+          "Residential wall and floor tiling on the Mornington Peninsula with Shaun Fyson - bathrooms, kitchens, splashbacks, walls and floors.",
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Fyson Tiling" },
@@ -99,7 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Residential wall and floor tiling on the Mornington Peninsula with Shaun Fyson — bathrooms, kitchens, splashbacks, walls and floors.",
+          "Residential wall and floor tiling on the Mornington Peninsula with Shaun Fyson - bathrooms, kitchens, splashbacks, walls and floors.",
       },
       { property: "og:url", content: siteOrigin },
       { property: "og:image", content: "https://www.fysontiling.com.au/favicon.png" },

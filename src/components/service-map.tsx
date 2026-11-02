@@ -1,35 +1,41 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RichT, T } from "@/components/rich-text";
-import { ClientOnly, Link } from '@tanstack/react-router';
-import { ArrowUpRight, MapPin, Search } from 'lucide-react';
-import { suburbs } from '@/lib/site-data';
-import { Button } from '@/components/ui/button';
+import { ClientOnly, Link } from "@tanstack/react-router";
+import { ArrowUpRight, MapPin, Search } from "lucide-react";
+import { suburbs } from "@/lib/site-data";
+import { Button } from "@/components/ui/button";
 
-type LeafletMap = import('leaflet').Map;
+type LeafletMap = import("leaflet").Map;
 
-
-function MapCanvas({ selected, onSelect }: { selected: string | null; onSelect: (name: string) => void }) {
+function MapCanvas({
+  selected,
+  onSelect,
+}: {
+  selected: string | null;
+  onSelect: (name: string) => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
-  const markersRef = useRef<Map<string, import('leaflet').CircleMarker>>(new Map());
+  const markersRef = useRef<Map<string, import("leaflet").CircleMarker>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const L = await import('leaflet');
-      await import('leaflet/dist/leaflet.css');
+      const L = await import("leaflet");
+      await import("leaflet/dist/leaflet.css");
       if (cancelled || !containerRef.current || mapRef.current) return;
       const map = L.map(containerRef.current, {
         center: [-38.32, 145.02],
         zoom: 10,
         scrollWheelZoom: false,
       });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 18,
       }).addTo(map);
       const style = getComputedStyle(document.documentElement);
-      const primary = style.getPropertyValue('--primary').trim() || 'oklch(0.43 0.067 162)';
+      const primary = style.getPropertyValue("--primary").trim() || "oklch(0.43 0.067 162)";
       suburbs.forEach((s) => {
         const marker = L.circleMarker([s.lat, s.lng], {
           radius: 7,
@@ -39,8 +45,8 @@ function MapCanvas({ selected, onSelect }: { selected: string | null; onSelect: 
           fillOpacity: 0.55,
         })
           .addTo(map)
-          .bindTooltip(s.name, { direction: 'top', offset: [0, -6] });
-        marker.on('click', () => onSelect(s.name));
+          .bindTooltip(s.name, { direction: "top", offset: [0, -6] });
+        marker.on("click", () => onSelect(s.name));
         markersRef.current.set(s.name, marker);
       });
       mapRef.current = map;
@@ -61,18 +67,24 @@ function MapCanvas({ selected, onSelect }: { selected: string | null; onSelect: 
     markersRef.current.get(selected)?.openTooltip();
   }, [selected]);
 
-  return <div ref={containerRef} className="h-[320px] w-full md:h-[440px]" aria-label="Map of suburbs Fyson Tiling services" />;
+  return (
+    <div
+      ref={containerRef}
+      className="h-[320px] w-full md:h-[440px]"
+      aria-label="Map of suburbs Fyson Tiling services"
+    />
+  );
 }
 
 export function ServiceMapSection() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const itemRefs = useRef<Map<string, HTMLLIElement | null>>(new Map());
 
   useEffect(() => {
     if (!selected) return;
     const item = itemRefs.current.get(selected);
-    item?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    item?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [selected]);
 
   const filtered = useMemo(() => {
@@ -84,13 +96,20 @@ export function ServiceMapSection() {
   return (
     <section className="border-b border-border py-16 md:py-24">
       <div className="site-width">
-        <p className="eyebrow mb-3 text-primary"><T k="map.eyebrow" /></p>
-        <h2 className="section-title mb-4"><T k="map.title" /></h2>
+        <p className="eyebrow mb-3 text-primary">
+          <T k="map.eyebrow" />
+        </p>
+        <h2 className="section-title mb-4">
+          <T k="map.title" />
+        </h2>
         <RichT k="map.intro" className="mb-8 max-w-xl text-sm leading-7 text-muted-foreground" />
         <div className="grid gap-8 md:grid-cols-[1fr_1.4fr]">
           <div>
             <label className="relative block">
-              <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
               <input
                 type="search"
                 value={query}
@@ -112,7 +131,7 @@ export function ServiceMapSection() {
                     asChild
                     variant="ghost"
                     className={`group flex h-10 w-full min-w-0 items-center justify-between gap-2 rounded-full px-3 py-2 text-left text-sm transition-colors ${
-                      selected === s.name ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                      selected === s.name ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`}
                   >
                     <Link
@@ -125,21 +144,34 @@ export function ServiceMapSection() {
                     >
                       <MapPin size={13} className="shrink-0" />
                       <span className="truncate">{s.name}</span>
-                      <ArrowUpRight size={14} className="ml-auto shrink-0 opacity-50 transition-opacity group-hover:opacity-100" />
+                      <ArrowUpRight
+                        size={14}
+                        className="ml-auto shrink-0 opacity-50 transition-opacity group-hover:opacity-100"
+                      />
                     </Link>
                   </Button>
                 </li>
               ))}
               {filtered.length === 0 && (
                 <li className="col-span-2 px-3 py-4 text-sm text-muted-foreground">
-                  No matching suburb — we may still cover your area.
-                  <Button asChild variant="link" className="mt-2 block h-auto px-0"><Link to="/contact" search={{ suburb: query.trim() }}>Enquire about your area <ArrowUpRight className="inline" /></Link></Button>
+                  No matching suburb - we may still cover your area.
+                  <Button asChild variant="link" className="mt-2 block h-auto px-0">
+                    <Link to="/contact" search={{ suburb: query.trim() }}>
+                      Enquire about your area <ArrowUpRight className="inline" />
+                    </Link>
+                  </Button>
                 </li>
               )}
             </ul>
           </div>
           <div className="overflow-hidden rounded-3xl border border-border">
-            <ClientOnly fallback={<div className="flex h-[320px] items-center justify-center bg-muted text-sm text-muted-foreground md:h-[440px]">Loading map…</div>}>
+            <ClientOnly
+              fallback={
+                <div className="flex h-[320px] items-center justify-center bg-muted text-sm text-muted-foreground md:h-[440px]">
+                  Loading map…
+                </div>
+              }
+            >
               <MapCanvas selected={selected} onSelect={setSelected} />
             </ClientOnly>
           </div>

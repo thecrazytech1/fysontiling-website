@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { cleanDoc, isSafeHref, type RichDoc } from "@/lib/rich-text";
 
 // Only the formats the site renders: paragraphs, line breaks (Shift+Enter), bold,
-// italic, links and — except in headings and other one-line text — lists. Headings,
+// italic, links and - except in headings and other one-line text - lists. Headings,
 // quotes, code and so on are switched off, and pasted content is reduced to these formats.
 const makeExtensions = (inline: boolean) => [
   StarterKit.configure({
@@ -80,7 +80,7 @@ function ToolbarButton({
 function editLink(editor: Editor) {
   const current = (editor.getAttributes("link")["href"] as string | undefined) ?? "";
   const entered = window.prompt(
-    "Link address — a web page (https://…), email (mailto:…), phone (tel:…) or a page on this site (/contact). Leave empty to remove the link.",
+    "Link address - a web page (https://…), email (mailto:…), phone (tel:…) or a page on this site (/contact). Leave empty to remove the link.",
     current,
   );
   if (entered === null) return;

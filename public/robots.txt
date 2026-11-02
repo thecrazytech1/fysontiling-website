@@ -10,7 +10,7 @@ User-agent: facebookexternalhit
 Allow: /
 Disallow: /admin
 
-# AI search and assistants — welcome, so Fyson Tiling can be cited in answers
+# AI search and assistants - welcome, so Fyson Tiling can be cited in answers
 User-agent: OAI-SearchBot
 User-agent: ChatGPT-User
 User-agent: GPTBot

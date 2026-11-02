@@ -66,7 +66,7 @@ export async function sendEnquiryEmails(enquiry: Enquiry) {
     from,
     to: { name, address: enquiry.email },
     replyTo: notifyTo,
-    subject: "Thanks for your enquiry — Fyson Tiling",
+    subject: "Thanks for your enquiry - Fyson Tiling",
     text: [
       `Hi ${name},`,
       "",

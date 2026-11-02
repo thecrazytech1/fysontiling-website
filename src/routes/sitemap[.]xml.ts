@@ -8,7 +8,7 @@ import {
   type SitemapEntry,
 } from "@/lib/sitemap";
 
-// Public site origin — used for every <loc> in /sitemap.xml.
+// Public site origin - used for every <loc> in /sitemap.xml.
 const BASE_URL = "https://www.fysontiling.com.au";
 
 const PROJECT_ROUTE_ID = "/projects_/$slug";

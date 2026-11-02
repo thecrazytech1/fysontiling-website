@@ -2,9 +2,9 @@ import { contact } from "@/lib/site-data";
 
 // Every piece of page text Shaun can edit from /admin, with the wording the site
 // shipped with. The database only stores his changes; deleting one restores the default.
-//   heading — plain text; a line break starts a new line on the page
-//   plain   — one line of plain text (small headings, taglines)
-//   rich    — formatted text from the editor: paragraphs, bold, italic, links, lists
+//   heading - plain text; a line break starts a new line on the page
+//   plain   - one line of plain text (small headings, taglines)
+//   rich    - formatted text from the editor: paragraphs, bold, italic, links, lists
 
 type Kind = "heading" | "plain" | "rich";
 type TextField<K extends Kind = Kind> = { group: string; label: string; value: string; kind: K };
@@ -38,12 +38,12 @@ export const textDefaults = {
   ),
   "home.strip.middle": plain(
     "Home page",
-    "Strip under the photo — middle",
+    "Strip under the photo - middle",
     "Bathrooms · Kitchens · Walls & floors",
   ),
   "home.strip.right": plain(
     "Home page",
-    "Strip under the photo — right",
+    "Strip under the photo - right",
     "A personal, local approach",
   ),
 
@@ -65,32 +65,32 @@ export const textDefaults = {
   ),
   "services.1.title": plain(
     "Services section (Home & Services)",
-    "Bathroom tiling — name",
+    "Bathroom tiling - name",
     "Bathroom tiling",
   ),
   "services.2.title": plain(
     "Services section (Home & Services)",
-    "Kitchens & splashbacks — name",
+    "Kitchens & splashbacks - name",
     "Kitchens & splashbacks",
   ),
   "services.3.title": plain(
     "Services section (Home & Services)",
-    "Wall & floor tiling — name",
+    "Wall & floor tiling - name",
     "Wall & floor tiling",
   ),
   "services.1.text": rich(
     "Services section (Home & Services)",
-    "Bathroom tiling — description",
+    "Bathroom tiling - description",
     "A fresh start for your everyday rituals. Thoughtful wall and floor tiling for bathrooms and ensuites.",
   ),
   "services.2.text": rich(
     "Services section (Home & Services)",
-    "Kitchens & splashbacks — description",
+    "Kitchens & splashbacks - description",
     "A beautiful backdrop to the heart of your home. From subtle textures to a statement splashback.",
   ),
   "services.3.text": rich(
     "Services section (Home & Services)",
-    "Wall & floor tiling — description",
+    "Wall & floor tiling - description",
     "Bring a space together with considered layouts, clean lines and a finish that feels right at home.",
   ),
 
@@ -132,7 +132,7 @@ export const textDefaults = {
   "about.p2": rich(
     "About section (Home & About)",
     "Second paragraph",
-    "From selecting the perfect grout colours and tile trim finishes to mapping out tile layouts, we believe every choice matters. Whether you are planning a home renovation or building a brand-new property, let’s start with your vision—we will talk through your space and bring your ideas to life.",
+    "From selecting the perfect grout colours and tile trim finishes to mapping out tile layouts, we believe every choice matters. Whether you are planning a home renovation or building a brand-new property, let’s start with your vision-we will talk through your space and bring your ideas to life.",
   ),
 
   "community.eyebrow": plain(
@@ -160,7 +160,7 @@ export const textDefaults = {
   "map.intro": rich(
     "Suburb map (Home & Areas)",
     "Intro",
-    "Local tiling across the Mornington Peninsula and surrounds — from Mornington and Mount Martha to Sorrento and Portsea, and everywhere in between. Enquire with your suburb to confirm availability for your project.",
+    "Local tiling across the Mornington Peninsula and surrounds - from Mornington and Mount Martha to Sorrento and Portsea, and everywhere in between. Enquire with your suburb to confirm availability for your project.",
   ),
 
   "faq.eyebrow": plain("FAQ section (Home & FAQ)", "Small heading", "Before we begin"),
@@ -202,7 +202,7 @@ export const textDefaults = {
   "localAreas.p1": rich(
     "Service areas page",
     "First paragraph",
-    "Fyson Tiling is based on the Mornington Peninsula and tiles homes across the peninsula and surrounds — from Mornington, Mount Martha and Safety Beach in the north, through Dromana, McCrae, Arthurs Seat, Rosebud and Capel Sound, down to Rye, Blairgowrie, Sorrento and Portsea at the southern tip.",
+    "Fyson Tiling is based on the Mornington Peninsula and tiles homes across the peninsula and surrounds - from Mornington, Mount Martha and Safety Beach in the north, through Dromana, McCrae, Arthurs Seat, Rosebud and Capel Sound, down to Rye, Blairgowrie, Sorrento and Portsea at the southern tip.",
   ),
   "localAreas.p2": rich(
     "Service areas page",
@@ -212,7 +212,7 @@ export const textDefaults = {
   "localAreas.p3": rich(
     "Service areas page",
     "Third paragraph",
-    "Not sure if your suburb is covered? Search the map above or send an enquiry with your location — we’ll confirm availability for your project.",
+    "Not sure if your suburb is covered? Search the map above or send an enquiry with your location - we’ll confirm availability for your project.",
   ),
   "areas.eyebrow": plain("Service areas page", "Grey band small heading", "Close to home"),
   "areas.title": heading(
@@ -239,7 +239,7 @@ export const textDefaults = {
   "galleryPage.intro": rich(
     "Inspiration gallery page",
     "Intro",
-    "A look at the kinds of spaces we tile — bathrooms, kitchens, walls and floors. For the latest from Fyson Tiling, visit our Instagram or Facebook page.",
+    "A look at the kinds of spaces we tile - bathrooms, kitchens, walls and floors. For the latest from Fyson Tiling, visit our Instagram or Facebook page.",
   ),
 
   "projectsPage.eyebrow": plain("Projects page", "Small heading", "Fyson Tiling"),
@@ -263,13 +263,13 @@ export const textDefaults = {
   "reviewsPage.intro": rich(
     "Reviews page",
     "Intro",
-    "Genuine reviews from homeowners across the Mornington Peninsula and surrounds. Had Shaun tile your place? Your words would mean a lot — share them below.",
+    "Genuine reviews from homeowners across the Mornington Peninsula and surrounds. Had Shaun tile your place? Your words would mean a lot - share them below.",
   ),
-  "reviewsPage.formEyebrow": plain("Reviews page", "Review form — small heading", "Leave a review"),
-  "reviewsPage.formTitle": heading("Reviews page", "Review form — heading", "TELL US HOW IT WENT."),
+  "reviewsPage.formEyebrow": plain("Reviews page", "Review form - small heading", "Leave a review"),
+  "reviewsPage.formTitle": heading("Reviews page", "Review form - heading", "TELL US HOW IT WENT."),
   "reviewsPage.formNote": rich(
     "Reviews page",
-    "Review form — note",
+    "Review form - note",
     JSON.stringify({
       type: "doc",
       content: [
@@ -293,12 +293,12 @@ export const textDefaults = {
   ),
   "reviewsPage.thanksTitle": heading(
     "Reviews page",
-    "After sending a review — heading",
+    "After sending a review - heading",
     "THANK YOU FOR YOUR KIND WORDS.",
   ),
   "reviewsPage.thanksText": rich(
     "Reviews page",
-    "After sending a review — text",
+    "After sending a review - text",
     "Your review has been received. Shaun reads every one, and it will appear on the website once he has approved it.",
   ),
 
@@ -319,12 +319,12 @@ export const textDefaults = {
   ),
   "contact.thanksTitle": heading(
     "Contact page",
-    "After sending an enquiry — heading",
+    "After sending an enquiry - heading",
     "THANK YOU. YOU’RE ON THE LIST.",
   ),
   "contact.thanksText": rich(
     "Contact page",
-    "After sending an enquiry — text",
+    "After sending an enquiry - text",
     "Your project enquiry has been received and saved for Shaun to review.",
   ),
 } satisfies Record<string, TextField>;
