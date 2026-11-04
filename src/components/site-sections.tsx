@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { services, contact, press } from "@/lib/site-data";
 import { useImage, usePlainText, useSiteContent } from "@/lib/site-content";
+import { analytics } from "@/lib/analytics";
 
 // One hook call per service card (a fixed three), in card order.
 function useServiceImages() {
@@ -145,6 +146,7 @@ export function GallerySection({
                 onClick={() => {
                   setFilter(t);
                   setSelected(null);
+                  analytics.cta(`category-${t}`, "homepage");
                 }}
                 aria-pressed={filter === t}
                 className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${filter === t ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}
@@ -160,7 +162,10 @@ export function GallerySection({
               <article key={g.image} className="group">
                 <button
                   type="button"
-                  onClick={() => setSelected(i)}
+                  onClick={() => {
+                    setSelected(i);
+                    analytics.cta(`photo-${i}`, "homepage");
+                  }}
                   className="block w-full cursor-zoom-in overflow-hidden rounded-md text-left"
                   aria-label={`Enlarge photo: ${g.title}`}
                 >
@@ -236,6 +241,7 @@ export function GallerySection({
     </section>
   );
 }
+
 export function ProjectsSection({ limit }: { limit?: number | undefined }) {
   const { projects } = useSiteContent();
   const visibleProjects = typeof limit === "number" ? projects.slice(0, limit) : projects;
@@ -277,7 +283,12 @@ export function ProjectsSection({ limit }: { limit?: number | undefined }) {
               </Link>
               <p className="eyebrow mt-5 text-primary">{project.publication || "Fyson Tiling"}</p>
               <h3 className="mt-2 grow text-lg font-medium">{project.title}</h3>
-              <Button asChild variant="link" className="mt-2 px-0">
+              <Button
+                asChild
+                variant="link"
+                className="mt-2 px-0"
+                onClick={() => analytics.cta(`project-${project.slug}`, "homepage")}
+              >
                 <Link to="/projects/$slug" params={{ slug: project.slug }}>
                   Explore project <ArrowUpRight />
                 </Link>
@@ -287,7 +298,12 @@ export function ProjectsSection({ limit }: { limit?: number | undefined }) {
         </div>
         {hiddenProjects > 0 && (
           <div className="mt-10 flex justify-center">
-            <Button asChild variant="outline" className="h-12 rounded-full px-6">
+            <Button
+              asChild
+              variant="outline"
+              className="h-12 rounded-full px-6"
+              onClick={() => analytics.cta("projects", "homepage")}
+            >
               <Link to="/projects">
                 See all our projects <ArrowUpRight />
               </Link>
@@ -306,7 +322,10 @@ export function AboutSection() {
       <div className="site-width grid items-center gap-10 md:grid-cols-2 md:gap-20">
         <button
           type="button"
-          onClick={() => setEnlarged(0)}
+          onClick={() => {
+            setEnlarged(0);
+            analytics.cta("about-photo", "homepage");
+          }}
           aria-label={`Enlarge photo: ${photo.alt}`}
           className="relative block cursor-zoom-in"
         >
@@ -333,7 +352,11 @@ export function AboutSection() {
           </h2>
           <RichT k="about.p1" className="mt-6 text-sm leading-8 text-muted-foreground" />
           <RichT k="about.p2" className="mt-4 text-sm leading-8 text-muted-foreground" />
-          <Button asChild className="mt-8 h-12 rounded-full">
+          <Button
+            asChild
+            className="mt-8 h-12 rounded-full"
+            onClick={() => analytics.cta("about", "homepage")}
+          >
             <Link to="/contact">
               Meet your next project <ArrowUpRight />
             </Link>
@@ -361,7 +384,12 @@ export function AreasSection() {
             Mornington Peninsula, Victoria
           </p>
           <RichT k="areas.text" className="mt-4 text-sm leading-7 text-muted-foreground" />
-          <Button asChild variant="link" className="mt-3 px-0">
+          <Button
+            asChild
+            variant="link"
+            className="mt-3 px-0"
+            onClick={() => analytics.cta("areas", "homepage")}
+          >
             <Link to="/contact">
               Ask about your area <ArrowRight />
             </Link>
@@ -387,7 +415,12 @@ export function LocalAreasCopy() {
           <RichT k="localAreas.p1" />
           <RichT k="localAreas.p2" />
           <RichT k="localAreas.p3" />
-          <Button asChild variant="link" className="px-0">
+          <Button
+            asChild
+            variant="link"
+            className="px-0"
+            onClick={() => analytics.cta("local-areas", "homepage")}
+          >
             <Link to="/contact">
               Enquire about your suburb <ArrowRight />
             </Link>
@@ -438,18 +471,33 @@ export function ReviewsSection() {
           <RichT k="community.text" className="mt-3 text-sm text-muted-foreground" />
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button asChild variant="outline" className="h-12 rounded-full">
+          <Button
+            asChild
+            variant="outline"
+            className="h-12 rounded-full"
+            onClick={() => analytics.cta("facebook", "homepage")}
+          >
             <a href={contact.facebook} target="_blank" rel="noreferrer">
               Visit our Facebook page <ArrowUpRight />
             </a>
           </Button>
-          <Button asChild variant="outline" className="h-12 rounded-full">
+          <Button
+            asChild
+            variant="outline"
+            className="h-12 rounded-full"
+            onClick={() => analytics.cta("instagram", "homepage")}
+          >
             <a href={contact.instagram} target="_blank" rel="noreferrer">
               <Instagram />
               Visit our Instagram page <ArrowUpRight />
             </a>
           </Button>
-          <Button asChild variant="outline" className="h-12 rounded-full">
+          <Button
+            asChild
+            variant="outline"
+            className="h-12 rounded-full"
+            onClick={() => analytics.cta("google-reviews", "homepage")}
+          >
             <a href={contact.googleReview} target="_blank" rel="noreferrer">
               Review us on Google <ArrowUpRight />
             </a>

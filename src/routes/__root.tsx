@@ -11,12 +11,12 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader, SiteFooter } from "@/components/site-shell";
 import { localBusinessJsonLd, siteOrigin } from "@/lib/site-data";
 import { getSiteContent } from "@/lib/content.functions";
 import { Button } from "@/components/ui/button";
 import { UmamiTracker } from "../components/UmamiTracker";
+import { analytics } from "@/lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -43,9 +43,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -61,6 +58,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
             onClick={() => {
               router.invalidate();
               reset();
+              analytics.track("Error Page Reloaded", { error: error.message });
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >

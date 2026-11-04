@@ -15,6 +15,7 @@ import {
   ProjectCTA,
 } from "@/components/site-sections";
 import { ServiceMapSection } from "@/components/service-map";
+import { analytics } from "@/lib/analytics";
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
   head: () =>
@@ -44,7 +45,12 @@ function Index() {
               <span className="sr-only"> - wall and floor tiling on the Mornington Peninsula</span>
             </h1>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Button asChild variant="secondary" className="h-10 rounded-full px-5 text-sm">
+              <Button
+                asChild
+                variant="secondary"
+                className="h-10 rounded-full px-5 text-sm"
+                onClick={() => analytics.cta("hero", "homepage")}
+              >
                 <Link to="/contact">
                   Let’s talk about your project <ArrowUpRight />
                 </Link>
@@ -53,6 +59,7 @@ function Index() {
                 asChild
                 variant="ghost"
                 className="h-10 rounded-full border border-hero-ink/40 px-5 text-sm text-hero-ink hover:bg-hero-ink/10 hover:text-hero-ink"
+                onClick={() => analytics.cta("gallery", "homepage")}
               >
                 <Link to="/gallery">
                   Find inspiration <ArrowUpRight />
