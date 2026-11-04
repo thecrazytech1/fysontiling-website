@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Lightbox } from "@/components/lightbox";
 import type { ProjectPhoto } from "@/lib/site-content";
 
 export function ProjectStory({
@@ -21,18 +21,24 @@ export function ProjectStory({
     index < magazinePages && publication ? `${publication} · ` : "";
   const caption = (photo: ProjectPhoto, index: number) =>
     photo.caption || `${label(index)} ${index + 1}`;
-  const current = selected === null ? undefined : photos[selected];
   return (
     <>
       <div className="space-y-10">
         {photos.map((photo, index) => (
           <figure key={photo.url} className="mx-auto w-fit max-w-full">
-            <img
-              src={photo.url}
-              alt={photo.caption || `${title} - ${source(index)}${label(index)} ${index + 1}`}
-              loading={index === 0 ? "eager" : "lazy"}
-              className="mx-auto block max-h-[900px] w-auto max-w-full"
-            />
+            <button
+              type="button"
+              onClick={() => setSelected(index)}
+              aria-label={`Enlarge: ${caption(photo, index)}`}
+              className="block cursor-zoom-in"
+            >
+              <img
+                src={photo.url}
+                alt={photo.caption || `${title} - ${source(index)}${label(index)} ${index + 1}`}
+                loading={index === 0 ? "eager" : "lazy"}
+                className="mx-auto block max-h-[900px] w-auto max-w-full"
+              />
+            </button>
             <figcaption className="mt-3 border-b border-border pb-4">
               <p className="mb-3 max-w-prose text-sm leading-7 text-muted-foreground">
                 {caption(photo, index)}
@@ -58,26 +64,16 @@ export function ProjectStory({
           </figure>
         ))}
       </div>
-      <Dialog
-        open={selected !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelected(null);
-        }}
-      >
-        <DialogContent className="max-w-6xl">
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{current ? caption(current, selected ?? 0) : ""}</DialogDescription>
-          <div className="max-h-[75svh] overflow-auto">
-            {current && (
-              <img
-                src={current.url}
-                alt={caption(current, selected ?? 0)}
-                className="w-auto max-w-none"
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <Lightbox
+        title={title}
+        items={photos.map((photo, index) => ({
+          src: photo.url,
+          alt: caption(photo, index),
+          caption: `${source(index)}${caption(photo, index)}`,
+        }))}
+        index={selected}
+        onIndexChange={setSelected}
+      />
     </>
   );
 }

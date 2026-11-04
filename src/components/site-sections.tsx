@@ -3,6 +3,7 @@ import { RichT, T } from "@/components/rich-text";
 import { ArrowUpRight, MapPin, ArrowRight, Phone, Newspaper, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Lightbox } from "@/components/lightbox";
 import {
   Accordion,
   AccordionContent,
@@ -24,6 +25,9 @@ const serviceTextKeys = ["services.1.text", "services.2.text", "services.3.text"
 export function ServicesSection() {
   const serviceImages = useServiceImages();
   const plainText = usePlainText();
+  const [enlarged, setEnlarged] = useState<number | null>(null);
+  const serviceAlt = (i: number) =>
+    `${plainText(serviceTitleKeys[i] ?? "services.1.title")} by Fyson Tiling`;
   return (
     <section className="py-16 md:py-24">
       <div className="site-width">
@@ -41,15 +45,20 @@ export function ServicesSection() {
         <div className="grid gap-7 md:grid-cols-3">
           {services.map((s, i) => (
             <article key={s.title} className="group">
-              <Link to="/contact" className="block overflow-hidden rounded-md">
+              <button
+                type="button"
+                onClick={() => setEnlarged(i)}
+                aria-label={`Enlarge photo: ${serviceAlt(i)}`}
+                className="block w-full cursor-zoom-in overflow-hidden rounded-md"
+              >
                 <img
                   src={serviceImages[i]?.src}
-                  alt={`${plainText(serviceTitleKeys[i] ?? "services.1.title")} by Fyson Tiling`}
+                  alt={serviceAlt(i)}
                   loading="lazy"
                   style={{ objectPosition: serviceImages[i]?.focus }}
                   className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-              </Link>
+              </button>
               <div className="mt-5 flex items-center justify-between">
                 <h3 className="text-lg font-medium">
                   <T k={serviceTitleKeys[i] ?? "services.1.title"} />
@@ -68,6 +77,16 @@ export function ServicesSection() {
             </article>
           ))}
         </div>
+        <Lightbox
+          title="Our services"
+          items={serviceImages.map((image, i) => ({
+            src: image.src,
+            alt: serviceAlt(i),
+            caption: plainText(serviceTitleKeys[i] ?? "services.1.title"),
+          }))}
+          index={enlarged}
+          onIndexChange={setEnlarged}
+        />
       </div>
     </section>
   );
@@ -90,7 +109,6 @@ export function GallerySection({
     initialType && types.includes(initialType) ? initialType : "All",
   );
   const items = full ? gallery.filter((g) => filter === "All" || g.type === filter) : [];
-  const item = selected === null ? null : items[selected];
   // Category cards avoid repeating the photos already used on the service cards.
   const shown = new Set(useServiceImages().map((image) => image.src));
   const categoryCards = types
@@ -143,8 +161,8 @@ export function GallerySection({
                 <button
                   type="button"
                   onClick={() => setSelected(i)}
-                  className="block w-full overflow-hidden rounded-md text-left"
-                  aria-label={`View ${g.type}`}
+                  className="block w-full cursor-zoom-in overflow-hidden rounded-md text-left"
+                  aria-label={`Enlarge photo: ${g.title}`}
                 >
                   <img
                     src={g.image}
@@ -205,6 +223,14 @@ export function GallerySection({
           <p className="text-sm text-muted-foreground">
             No projects in this category yet - check back soon.
           </p>
+        )}
+        {full && (
+          <Lightbox
+            title="Tiling inspiration"
+            items={items.map((g) => ({ src: g.image, alt: g.title, caption: g.title }))}
+            index={selected}
+            onIndexChange={setSelected}
+          />
         )}
       </div>
     </section>
@@ -274,10 +300,16 @@ export function ProjectsSection({ limit }: { limit?: number | undefined }) {
 }
 export function AboutSection() {
   const photo = useImage("about.photo");
+  const [enlarged, setEnlarged] = useState<number | null>(null);
   return (
     <section className="py-16 md:py-24">
       <div className="site-width grid items-center gap-10 md:grid-cols-2 md:gap-20">
-        <div className="relative">
+        <button
+          type="button"
+          onClick={() => setEnlarged(0)}
+          aria-label={`Enlarge photo: ${photo.alt}`}
+          className="relative block cursor-zoom-in"
+        >
           <img
             src={photo.src}
             alt={photo.alt}
@@ -285,7 +317,13 @@ export function AboutSection() {
             style={{ objectPosition: photo.focus }}
             className="aspect-square max-h-[520px] w-full rounded-md object-cover"
           />
-        </div>
+        </button>
+        <Lightbox
+          title="About Fyson Tiling"
+          items={[{ src: photo.src, alt: photo.alt }]}
+          index={enlarged}
+          onIndexChange={setEnlarged}
+        />
         <div>
           <p className="eyebrow mb-4 text-primary">
             <T k="about.eyebrow" />

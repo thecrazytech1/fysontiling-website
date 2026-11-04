@@ -234,3 +234,7 @@
 
 - [x] The home page hero, the three service card photos and the About portrait can be changed in Admin → Page text: choose any project/gallery photo or upload a new one, set the crop, or go back to the original (choices stored in `site_images`, migration 0006)
 - [ ] Link previews (og:image) and Google business data still use the built-in hero photo
+
+## Enlarge photos (Nov 2)
+- [x] Clicking a photo in the gallery, on a project page, on a service card or the About photo opens a full-screen viewer: next/previous (arrows, keys or swipe), caption and counter, click the photo to see it at full size, Esc or click outside to close
+- [x] Fixed: clicking a gallery photo did nothing (the old viewer had been lost)

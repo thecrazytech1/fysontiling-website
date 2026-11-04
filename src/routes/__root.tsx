@@ -16,6 +16,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-shell";
 import { localBusinessJsonLd, siteOrigin } from "@/lib/site-data";
 import { getSiteContent } from "@/lib/content.functions";
 import { Button } from "@/components/ui/button";
+import { UmamiTracker } from "../components/UmamiTracker";
 
 function NotFoundComponent() {
   return (
@@ -119,6 +120,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           inLanguage: "en-AU",
         }),
       },
+      {
+        src: "https://analytics.fysontiling.com.au/script.js",
+        defer: true,
+        "data-website-id": "ecc4eb06-886f-4aac-ae42-1001613a1e41",
+        "data-domains": "fysontiling.com.au,www.fysontiling.com.au",
+      },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -161,6 +168,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <SiteHeader />
       <main>
+        <UmamiTracker />
         <Outlet />
       </main>
       <SiteFooter />
